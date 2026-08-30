@@ -1,0 +1,601 @@
+<div class="page dashboard-page">
+
+  <div class="page-header compact-header">
+
+    <div>
+
+      <span class="eyebrow">
+        RESUMEN OPERATIVO
+      </span>
+
+      <h1>
+        Dashboard de asistencia
+      </h1>
+
+      <p>
+        Indicadores y tendencias de asistencia según los filtros seleccionados.
+      </p>
+
+    </div>
+
+    <a
+      class="btn btn-primary"
+      routerLink="/registrar-asistencia">
+
+      ＋ Registrar asistencia
+
+    </a>
+
+  </div>
+
+  <section class="card filter-card">
+
+    <div class="filter-copy">
+
+      <h2>
+        Filtros del dashboard
+      </h2>
+
+      <p>
+        Ajusta los indicadores y gráficos por año, mes, plaza o turno.
+      </p>
+
+    </div>
+
+    <div class="filters">
+
+      <label>
+
+        <span>Año</span>
+
+        <select
+          [value]="anio()"
+          (change)="onAnioChange($event)">
+
+          @for (item of anios; track item) {
+
+            <option [value]="item">
+              {{ item }}
+            </option>
+
+          }
+
+        </select>
+
+      </label>
+
+      <label>
+
+        <span>Mes</span>
+
+        <select
+          [value]="mes()"
+          (change)="onMesChange($event)">
+
+          @for (item of meses; track item.id) {
+
+            <option [value]="item.id">
+              {{ item.corto }}
+            </option>
+
+          }
+
+        </select>
+
+      </label>
+
+      <label>
+
+        <span>Plaza</span>
+
+        <select
+          [value]="plazaId() ?? ''"
+          (change)="onPlazaChange($event)">
+
+          <option value="">
+            Todas las plazas
+          </option>
+
+          @for (plaza of plazas(); track plaza.id) {
+
+            <option [value]="plaza.id">
+              {{ plaza.codigo }}
+            </option>
+
+          }
+
+        </select>
+
+      </label>
+
+      <label>
+
+        <span>Turno</span>
+
+        <select
+          [value]="turnoId() ?? ''"
+          (change)="onTurnoChange($event)">
+
+          <option value="">
+            Todos los turnos
+          </option>
+
+          @for (turno of turnos(); track turno.id) {
+
+            <option [value]="turno.id">
+              Turno {{ turno.codigo }}
+            </option>
+
+          }
+
+        </select>
+
+      </label>
+
+    </div>
+
+  </section>
+
+  @if (error()) {
+
+    <div class="alert alert-error error-row">
+
+      <span>
+        {{ error() }}
+      </span>
+
+      <button
+        type="button"
+        (click)="cargarInicial()">
+
+        Reintentar
+
+      </button>
+
+    </div>
+
+  }
+
+  @if (loading()) {
+
+    <div class="loading-grid">
+
+      @for (item of [1,2,3,4]; track item) {
+
+        <div class="skeleton stat-skeleton"></div>
+
+      }
+
+    </div>
+
+    <div class="chart-loading-grid">
+
+      <div class="skeleton chart-skeleton"></div>
+      <div class="skeleton chart-skeleton"></div>
+
+    </div>
+
+  } @else {
+
+    <section class="stats-grid">
+
+      <article class="card stat-card">
+
+        <span>
+          Registros de asistencia
+        </span>
+
+        <strong>
+          {{ totalRegistros() }}
+        </strong>
+
+        <small>
+          {{ nombreMes() }} {{ anio() }}
+        </small>
+
+      </article>
+
+      <article class="card stat-card">
+
+        <span>
+          Asistencia promedio
+        </span>
+
+        <strong>
+          {{ asistenciaPromedio() | number:'1.0-1' }}%
+        </strong>
+
+        <small>
+          Promedio ponderado
+        </small>
+
+      </article>
+
+      <article class="card stat-card">
+
+        <span>
+          Ausencias registradas
+        </span>
+
+        <strong>
+          {{ totalAusencias() }}
+        </strong>
+
+        <small>
+          Según los filtros aplicados
+        </small>
+
+      </article>
+
+      <article class="card stat-card">
+
+        <span>
+          Registros al 100%
+        </span>
+
+        <strong>
+          {{ registros100() }}
+        </strong>
+
+        <small>
+          Sin ausencias en el turno
+        </small>
+
+      </article>
+
+    </section>
+
+    <section class="charts-grid">
+
+      <article class="card chart-card">
+
+        <div class="panel-head">
+
+          <div>
+
+            <h2>
+              Asistencia mensual
+            </h2>
+
+            <p>
+              Promedio de asistencia por mes ({{ anio() }}).
+            </p>
+
+          </div>
+
+        </div>
+
+        <div class="chart-scroll annual-chart">
+
+          <svg
+            class="line-chart"
+            viewBox="0 0 1000 280"
+            preserveAspectRatio="none"
+            role="img"
+            aria-label="Asistencia mensual">
+
+            @for (tick of yTicks; track tick) {
+
+              <line
+                x1="55"
+                [attr.y1]="chartY(tick)"
+                x2="980"
+                [attr.y2]="chartY(tick)"
+                class="grid-line"
+              />
+
+              <text
+                x="42"
+                [attr.y]="chartY(tick) + 4"
+                text-anchor="end"
+                class="axis-label">
+
+                {{ tick }}%
+
+              </text>
+
+            }
+
+            @if (linePath(mensual())) {
+
+              <path
+                [attr.d]="linePath(mensual())"
+                class="line-path"
+              />
+
+            }
+
+            @for (
+              point of mensual();
+              track $index;
+              let i = $index
+            ) {
+
+              @if (point.value !== null) {
+
+                <circle
+                  [attr.cx]="chartX(i, mensual().length)"
+                  [attr.cy]="chartY(point.value)"
+                  r="5.5"
+                  class="line-dot">
+
+                  <title>
+                    {{ point.label }}:
+                    {{ point.value | number:'1.0-1' }}%
+                  </title>
+
+                </circle>
+
+              }
+
+              <text
+                [attr.x]="chartX(i, mensual().length)"
+                y="266"
+                text-anchor="middle"
+                class="x-label">
+
+                {{ point.label }}
+
+              </text>
+
+            }
+
+          </svg>
+
+        </div>
+
+        @if (!registrosBase().length) {
+
+          <div class="chart-empty">
+
+            No hay registros para el año y filtros seleccionados.
+
+          </div>
+
+        }
+
+      </article>
+
+      <article class="card chart-card">
+
+        <div class="panel-head">
+
+          <div>
+
+            <h2>
+              Asistencia diaria
+            </h2>
+
+            <p>
+              Promedio de asistencia por día
+              ({{ nombreMes() }} {{ anio() }}).
+            </p>
+
+          </div>
+
+        </div>
+
+        <div class="chart-scroll daily-chart">
+
+          <svg
+            class="line-chart daily-svg"
+            viewBox="0 0 1000 280"
+            preserveAspectRatio="none"
+            role="img"
+            aria-label="Asistencia diaria">
+
+            @for (tick of yTicks; track tick) {
+
+              <line
+                x1="55"
+                [attr.y1]="chartY(tick)"
+                x2="980"
+                [attr.y2]="chartY(tick)"
+                class="grid-line"
+              />
+
+              <text
+                x="42"
+                [attr.y]="chartY(tick) + 4"
+                text-anchor="end"
+                class="axis-label">
+
+                {{ tick }}%
+
+              </text>
+
+            }
+
+            @if (linePath(diario())) {
+
+              <path
+                [attr.d]="linePath(diario())"
+                class="line-path"
+              />
+
+            }
+
+            @for (
+              point of diario();
+              track $index;
+              let i = $index
+            ) {
+
+              @if (point.value !== null) {
+
+                <circle
+                  [attr.cx]="chartX(i, diario().length)"
+                  [attr.cy]="chartY(point.value)"
+                  r="4.8"
+                  class="line-dot">
+
+                  <title>
+                    Día {{ point.label }}:
+                    {{ point.value | number:'1.0-1' }}%
+                  </title>
+
+                </circle>
+
+              }
+
+              <text
+                [attr.x]="chartX(i, diario().length)"
+                y="266"
+                text-anchor="middle"
+                class="x-label daily-label">
+
+                {{ point.label }}
+
+              </text>
+
+            }
+
+          </svg>
+
+        </div>
+
+        @if (!registrosMes().length) {
+
+          <div class="chart-empty">
+
+            No hay registros para
+            {{ nombreMes() }}
+            con los filtros seleccionados.
+
+          </div>
+
+        }
+
+      </article>
+
+    </section>
+
+    <section class="bottom-grid">
+
+      <article class="card detail-card">
+
+        <div class="panel-head">
+
+          <div>
+
+            <h2>
+              Asistencia promedio por turno
+            </h2>
+
+            <p>
+              Promedio según los registros filtrados.
+            </p>
+
+          </div>
+
+        </div>
+
+        <div class="progress-list">
+
+          @for (
+            turno of resumenTurnos();
+            track turno.id
+          ) {
+
+            <div class="progress-item">
+
+              <div class="progress-head">
+
+                <span>
+                  {{ turno.nombre }}
+                </span>
+
+                <strong>
+                  {{ turno.porcentaje | number:'1.0-1' }}%
+                </strong>
+
+              </div>
+
+              <div class="progress-track">
+
+                <div
+                  [style.width.%]="turno.porcentaje">
+                </div>
+
+              </div>
+
+            </div>
+
+          }
+
+        </div>
+
+      </article>
+
+      <article class="card detail-card">
+
+        <div class="panel-head">
+
+          <div>
+
+            <h2>
+              Ausencias por motivo
+            </h2>
+
+            <p>
+              Principales motivos registrados.
+            </p>
+
+          </div>
+
+        </div>
+
+        @if (motivos().length) {
+
+          <div class="progress-list">
+
+            @for (
+              motivo of motivos();
+              track motivo.motivo
+            ) {
+
+              <div class="progress-item">
+
+                <div class="progress-head">
+
+                  <span>
+                    {{ motivo.motivo }}
+                  </span>
+
+                  <strong>
+                    {{ motivo.total }}
+                  </strong>
+
+                </div>
+
+                <div class="progress-track">
+
+                  <div
+                    [style.width.%]="motivoWidth(motivo.total)">
+                  </div>
+
+                </div>
+
+              </div>
+
+            }
+
+          </div>
+
+        } @else {
+
+          <div class="empty-state compact">
+
+            No hay ausencias registradas con los filtros seleccionados.
+
+          </div>
+
+        }
+
+      </article>
+
+    </section>
+
+  }
+
+</div>

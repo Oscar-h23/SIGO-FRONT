@@ -1,0 +1,123 @@
+<div class="shell" [class.sidebar-collapsed]="sidebarCollapsed()">
+
+  <aside
+    class="sidebar"
+    [class.open]="sidebarOpen()"
+    [class.collapsed]="sidebarCollapsed()">
+
+    <div class="brand">
+      <div class="brand-mark">S</div>
+
+      <div class="brand-copy">
+        <strong>SIGO</strong>
+        <span>Gestión Operativa</span>
+      </div>
+    </div>
+
+    <nav class="nav">
+
+      <a
+        routerLink="/dashboard"
+        routerLinkActive="active"
+        (click)="closeSidebar()"
+        title="Dashboard">
+
+        <span class="nav-icon">▦</span>
+        <span class="nav-label">Dashboard</span>
+
+      </a>
+
+      <a
+        routerLink="/registrar-asistencia"
+        routerLinkActive="active"
+        (click)="closeSidebar()"
+        title="Registrar asistencia">
+
+        <span class="nav-icon">✓</span>
+        <span class="nav-label">Registrar asistencia</span>
+
+      </a>
+
+      <a
+        routerLink="/historial"
+        routerLinkActive="active"
+        (click)="closeSidebar()"
+        title="Historial">
+
+        <span class="nav-icon">◷</span>
+        <span class="nav-label">Historial</span>
+
+      </a>
+
+    </nav>
+
+    <div class="sidebar-footer">
+
+      <div class="status-dot"></div>
+
+      <div class="sidebar-footer-copy">
+        <strong>API conectada</strong>
+        <span>Spring Boot + Supabase</span>
+      </div>
+
+    </div>
+
+  </aside>
+
+  @if (sidebarOpen()) {
+    <button
+      class="overlay"
+      type="button"
+      aria-label="Cerrar menú"
+      (click)="closeSidebar()">
+    </button>
+  }
+
+  <section class="content">
+
+    <header class="topbar">
+
+      <button
+        class="menu-btn"
+        type="button"
+        (click)="toggleSidebar()"
+        [attr.aria-label]="sidebarCollapsed()
+          ? 'Mostrar menú lateral'
+          : 'Ocultar menú lateral'"
+        [attr.aria-expanded]="!sidebarCollapsed()">
+
+        ☰
+
+      </button>
+
+      <div class="topbar-title">
+        <span>Módulo de asistencia</span>
+        <small>Control operativo en tiempo real</small>
+      </div>
+
+      <div class="user-chip">
+
+        <div class="avatar">
+          CO
+        </div>
+
+        <div>
+          <strong>Controlador</strong>
+          <span>Lima Expresa</span>
+        </div>
+
+      </div>
+
+    </header>
+
+    <main class="main-content">
+      <router-outlet />
+    </main>
+
+    <footer>
+      © {{ currentYear }} SIGO · Sistema Integral de Gestión Operativa
+    </footer>
+
+  </section>
+
+</div>
