@@ -42,8 +42,11 @@ export interface AsistenciaRequest {
   turnoId: number;
   controladorId: number;
   fecha: string;
+
+  programados: number;
+
   presentes: number;
-  notas: string | null;
+  notas?: string | null;
   ausencias: AusenciaRequest[];
   evidencias: string[];
 }

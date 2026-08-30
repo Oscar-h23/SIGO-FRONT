@@ -51,10 +51,10 @@ export class AsistenciaFormComponent implements OnInit {
   readonly success = signal('');
   readonly error = signal('');
 
-  readonly programados = signal(0);
   readonly ausentesEsperados = signal(0);
 
   readonly form = this.fb.group({
+
     plazaId: [
       null as number | null,
       Validators.required
@@ -73,6 +73,14 @@ export class AsistenciaFormComponent implements OnInit {
     fecha: [
       this.today(),
       Validators.required
+    ],
+
+    programados: [
+      0,
+      [
+        Validators.required,
+        Validators.min(1)
+      ]
     ],
 
     presentes: [
@@ -95,6 +103,7 @@ export class AsistenciaFormComponent implements OnInit {
   ngOnInit(): void {
 
     this.api.getCatalogos().subscribe({
+
       next: (data) => {
 
         this.plazas.set(data.plazas);
@@ -107,6 +116,7 @@ export class AsistenciaFormComponent implements OnInit {
       },
 
       error: (err) => {
+
         this.error.set(
           this.errorMessage(err)
         );
@@ -115,14 +125,35 @@ export class AsistenciaFormComponent implements OnInit {
       }
     });
 
+    /*
+     * Cuando cambia el turno:
+     * cargar automáticamente el personal programado.
+     */
     this.form.controls.turnoId.valueChanges.subscribe(() => {
       this.syncTurno();
     });
 
+    /*
+     * Cuando el usuario modifica manualmente
+     * el personal programado:
+     * actualizar límites y ausencias.
+     */
+    this.form.controls.programados.valueChanges.subscribe(() => {
+      this.syncProgramados();
+    });
+
+    /*
+     * Cuando cambia el número de presentes:
+     * recalcular ausentes.
+     */
     this.form.controls.presentes.valueChanges.subscribe(() => {
       this.syncAusencias();
     });
 
+    /*
+     * Si cambia la plaza:
+     * limpiar trabajadores seleccionados.
+     */
     this.form.controls.plazaId.valueChanges.subscribe(() => {
       this.resetAusenciasTrabajadores();
     });
@@ -190,6 +221,25 @@ export class AsistenciaFormComponent implements OnInit {
       return;
     }
 
+    const programados =
+      Number(
+        this.form.controls.programados.value ?? 0
+      );
+
+    const presentes =
+      Number(
+        this.form.controls.presentes.value ?? 0
+      );
+
+    if (presentes > programados) {
+
+      this.error.set(
+        'El personal presente no puede ser mayor al personal programado.'
+      );
+
+      return;
+    }
+
     const expected =
       this.ausentesEsperados();
 
@@ -246,6 +296,9 @@ export class AsistenciaFormComponent implements OnInit {
       fecha:
         String(raw.fecha),
 
+      programados:
+        Number(raw.programados),
+
       presentes:
         Number(raw.presentes),
 
@@ -254,6 +307,7 @@ export class AsistenciaFormComponent implements OnInit {
 
       ausencias:
         ausencias.map((ausencia) => ({
+
           trabajadorId:
             Number(
               ausencia.trabajadorId
@@ -323,6 +377,12 @@ export class AsistenciaFormComponent implements OnInit {
     });
   }
 
+  /*
+   * Se ejecuta cuando cambia el turno.
+   *
+   * El turno proporciona el número por defecto,
+   * pero luego el usuario puede modificarlo.
+   */
   private syncTurno(): void {
 
     const turno =
@@ -337,14 +397,22 @@ export class AsistenciaFormComponent implements OnInit {
     const total =
       turno?.personalProgramado ?? 0;
 
-    this.programados.set(total);
+    /*
+     * Colocar programados según el turno.
+     *
+     * emitEvent false para evitar disparar
+     * dos veces la actualización.
+     */
+    this.form.controls.programados.setValue(
+      total,
+      {
+        emitEvent: false
+      }
+    );
 
-    this.form.controls.presentes.setValidators([
-      Validators.required,
-      Validators.min(0),
-      Validators.max(total)
-    ]);
-
+    /*
+     * Por defecto todos están presentes.
+     */
     this.form.controls.presentes.setValue(
       total,
       {
@@ -352,15 +420,97 @@ export class AsistenciaFormComponent implements OnInit {
       }
     );
 
-    this.form.controls.presentes
-      .updateValueAndValidity({
-        emitEvent: false
-      });
+    this.actualizarValidadorPresentes();
 
     this.syncAusencias();
   }
 
+  /*
+   * Se ejecuta cuando el usuario cambia
+   * manualmente "programados".
+   */
+  private syncProgramados(): void {
+
+    const programados =
+      Number(
+        this.form.controls.programados.value ?? 0
+      );
+
+    let presentes =
+      Number(
+        this.form.controls.presentes.value ?? 0
+      );
+
+    /*
+     * Si el usuario reduce programados
+     * por debajo del número de presentes,
+     * ajustamos presentes automáticamente.
+     *
+     * Ejemplo:
+     *
+     * programados = 7
+     * presentes = 7
+     *
+     * cambia programados a 5
+     *
+     * presentes pasa automáticamente a 5.
+     */
+    if (
+      programados >= 0 &&
+      presentes > programados
+    ) {
+
+      presentes = programados;
+
+      this.form.controls.presentes.setValue(
+        presentes,
+        {
+          emitEvent: false
+        }
+      );
+    }
+
+    this.actualizarValidadorPresentes();
+
+    this.syncAusencias();
+  }
+
+  /*
+   * Actualiza dinámicamente el máximo
+   * permitido para presentes.
+   */
+  private actualizarValidadorPresentes(): void {
+
+    const programados =
+      Number(
+        this.form.controls.programados.value ?? 0
+      );
+
+    this.form.controls.presentes.setValidators([
+      Validators.required,
+      Validators.min(0),
+      Validators.max(
+        Math.max(0, programados)
+      )
+    ]);
+
+    this.form.controls.presentes
+      .updateValueAndValidity({
+        emitEvent: false
+      });
+  }
+
+  /*
+   * Calcula:
+   *
+   * ausentes = programados - presentes
+   */
   private syncAusencias(): void {
+
+    const programados =
+      Number(
+        this.form.controls.programados.value ?? 0
+      );
 
     const presentes =
       Number(
@@ -370,13 +520,17 @@ export class AsistenciaFormComponent implements OnInit {
     const expected =
       Math.max(
         0,
-        this.programados() - presentes
+        programados - presentes
       );
 
     this.ausentesEsperados.set(
       expected
     );
 
+    /*
+     * Crear formularios de ausencia
+     * según la cantidad requerida.
+     */
     while (
       this.ausencias.length < expected
     ) {
@@ -399,6 +553,10 @@ export class AsistenciaFormComponent implements OnInit {
       );
     }
 
+    /*
+     * Eliminar formularios sobrantes
+     * si disminuye el número de ausentes.
+     */
     while (
       this.ausencias.length > expected
     ) {
@@ -439,15 +597,21 @@ export class AsistenciaFormComponent implements OnInit {
     this.files.set([]);
 
     this.form.reset({
+
       plazaId: null,
+
       turnoId: null,
+
       controladorId: null,
+
       fecha: this.today(),
+
+      programados: 0,
+
       presentes: 0,
+
       notas: ''
     });
-
-    this.programados.set(0);
 
     this.ausentesEsperados.set(0);
 
