@@ -1,5 +1,6 @@
 <div class="shell" [class.sidebar-collapsed]="sidebarCollapsed()">
 
+  <!-- ===== SIDEBAR ===== -->
   <aside
     class="sidebar"
     [class.open]="sidebarOpen()"
@@ -7,7 +8,6 @@
 
     <div class="brand">
       <div class="brand-mark">S</div>
-
       <div class="brand-copy">
         <strong>SIGO</strong>
         <span>Gestión Operativa</span>
@@ -15,55 +15,36 @@
     </div>
 
     <nav class="nav">
-
-      <a
-        routerLink="/dashboard"
-        routerLinkActive="active"
-        (click)="closeSidebar()"
-        title="Dashboard">
-
-        <span class="nav-icon">▦</span>
+      <a routerLink="/dashboard" routerLinkActive="active" title="Dashboard" (click)="closeSidebar()">
+        
         <span class="nav-label">Dashboard</span>
-
       </a>
 
-      <a
-        routerLink="/registrar-asistencia"
-        routerLinkActive="active"
-        (click)="closeSidebar()"
-        title="Registrar asistencia">
-
-        <span class="nav-icon">✓</span>
+      <a routerLink="/registrar-asistencia" routerLinkActive="active" title="Registrar asistencia" (click)="closeSidebar()">
+        
         <span class="nav-label">Registrar asistencia</span>
-
       </a>
 
-      <a
-        routerLink="/historial"
-        routerLinkActive="active"
-        (click)="closeSidebar()"
-        title="Historial">
-
-        <span class="nav-icon">◷</span>
-        <span class="nav-label">Historial</span>
-
+      <a routerLink="/historial" routerLinkActive="active" title="Historial" (click)="closeSidebar()">
+        
+        <span class="nav-label">Historial de asistencias</span>
       </a>
 
+      <a routerLink="/nuevo-relevo" routerLinkActive="active" title="Nuevo relevo" (click)="closeSidebar()">
+        
+        <span class="nav-label">Nuevo relevo</span>
+      </a>
+
+      <a routerLink="/historial-relevos" routerLinkActive="active" title="Historial de relevos" (click)="closeSidebar()">
+        
+        <span class="nav-label">Historial de relevos</span>
+      </a>
     </nav>
 
-    <div class="sidebar-footer">
-
-      <div class="status-dot"></div>
-
-      <div class="sidebar-footer-copy">
-        <strong>API conectada</strong>
-        <span>Spring Boot + Supabase</span>
-      </div>
-
-    </div>
-
+    
   </aside>
 
+  <!-- ===== OVERLAY (móvil) ===== -->
   @if (sidebarOpen()) {
     <button
       class="overlay"
@@ -73,21 +54,17 @@
     </button>
   }
 
+  <!-- ===== CONTENIDO ===== -->
   <section class="content">
 
     <header class="topbar">
-
       <button
         class="menu-btn"
         type="button"
-        (click)="toggleSidebar()"
-        [attr.aria-label]="sidebarCollapsed()
-          ? 'Mostrar menú lateral'
-          : 'Ocultar menú lateral'"
-        [attr.aria-expanded]="!sidebarCollapsed()">
-
+        [attr.aria-label]="sidebarCollapsed() ? 'Mostrar menú lateral' : 'Ocultar menú lateral'"
+        [attr.aria-expanded]="!sidebarCollapsed()"
+        (click)="toggleSidebar()">
         ☰
-
       </button>
 
       <div class="topbar-title">
@@ -96,18 +73,12 @@
       </div>
 
       <div class="user-chip">
-
-        <div class="avatar">
-          CO
-        </div>
-
+        <div class="avatar">CO</div>
         <div>
           <strong>Controlador</strong>
           <span>Lima Expresa</span>
         </div>
-
       </div>
-
     </header>
 
     <main class="main-content">

@@ -18,6 +18,29 @@ export const routes: Routes = [
       {
         path: 'historial',
         loadComponent: () => import('./features/asistencia-history/asistencia-history.component').then((m) => m.AsistenciaHistoryComponent)
+      },
+
+      // =========================
+      // RELEVOS
+      // =========================
+
+      {
+        path: 'nuevo-relevo',
+        loadComponent: () =>
+          import('./features/relevo/relevo-form/relevo-form.component')
+            .then((m) => m.RelevoFormComponent)
+      },
+      {
+        path: 'historial-relevos',
+        loadComponent: () =>
+          import('./features/relevo/historial-relevos/historial-relevos.component')
+            .then((m) => m.HistorialRelevosComponent)
+      },
+      {
+        path: 'relevos/:id',
+        loadComponent: () =>
+          import('./features/relevo/detalle-relevo/detalle-relevo.component')
+            .then((m) => m.DetalleRelevoComponent)
       }
     ]
   },

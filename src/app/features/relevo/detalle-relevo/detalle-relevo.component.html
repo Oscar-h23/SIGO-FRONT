@@ -1,0 +1,1015 @@
+<div class="relevo-page">
+
+  <!-- ==========================================
+       TOP BAR
+       ========================================== -->
+
+  <div class="top-bar">
+
+    <button
+      type="button"
+      class="back-button"
+      (click)="volver()"
+    >
+      <span class="back-icon">←</span>
+      <span>Volver al historial</span>
+    </button>
+
+  </div>
+
+
+  <!-- ==========================================
+       LOADING
+       ========================================== -->
+
+  @if (cargando) {
+
+    <div class="state-container">
+
+      <div class="loader"></div>
+
+      <h2>Cargando relevo</h2>
+
+      <p>
+        Estamos obteniendo la información registrada.
+      </p>
+
+    </div>
+
+  }
+
+
+  <!-- ==========================================
+       ERROR
+       ========================================== -->
+
+  @if (error) {
+
+    <div class="error-card">
+
+      <div class="error-icon">
+        !
+      </div>
+
+      <div>
+        <strong>No se pudo cargar el relevo</strong>
+        <p>{{ error }}</p>
+      </div>
+
+    </div>
+
+  }
+
+
+  <!-- ==========================================
+       CONTENIDO
+       ========================================== -->
+
+  @if (!cargando && relevo) {
+
+
+    <!-- ========================================
+         HERO
+         ======================================== -->
+
+    <section class="hero-card">
+
+      <div class="hero-main">
+
+        <div class="hero-badge">
+          RELEVO #{{ relevo.id }}
+        </div>
+
+        <h1>
+          {{ relevo.plazaCodigo }}
+
+          @if (relevo.plazaDescripcion) {
+            <span class="hero-location">
+              · {{ relevo.plazaDescripcion }}
+            </span>
+          }
+        </h1>
+
+        <div class="hero-meta">
+
+          <span>
+            <span class="meta-icon">◷</span>
+            {{ relevo.fecha }}
+          </span>
+
+          <span class="meta-separator"></span>
+
+          <span>
+            {{ relevo.hora }}
+          </span>
+
+          <span class="meta-separator"></span>
+
+          <span>
+            Turno {{ relevo.turnoCodigo }}
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div class="hero-register">
+
+        <span>
+          Registrado
+        </span>
+
+        <strong>
+          {{ relevo.createdAt | date:'dd/MM/yyyy' }}
+        </strong>
+
+        <small>
+          {{ relevo.createdAt | date:'HH:mm' }}
+        </small>
+
+      </div>
+
+    </section>
+
+
+    <!-- ========================================
+         RESUMEN RÁPIDO
+         ======================================== -->
+
+    <section class="summary-grid">
+
+      <article class="summary-card">
+
+        <div class="summary-icon">
+          ▣
+        </div>
+
+        <div>
+
+          <span>
+            Total de vías
+          </span>
+
+          <strong>
+            {{ totalVias }}
+          </strong>
+
+        </div>
+
+      </article>
+
+
+      <article class="summary-card summary-success">
+
+        <div class="summary-dot"></div>
+
+        <div>
+
+          <span>
+            Operativas
+          </span>
+
+          <strong>
+            {{ viasOperativas }}
+          </strong>
+
+        </div>
+
+      </article>
+
+
+      <article class="summary-card summary-warning">
+
+        <div class="summary-dot"></div>
+
+        <div>
+
+          <span>
+            Observadas
+          </span>
+
+          <strong>
+            {{ viasObservadas }}
+          </strong>
+
+        </div>
+
+      </article>
+
+
+      <article class="summary-card summary-danger">
+
+        <div class="summary-dot"></div>
+
+        <div>
+
+          <span>
+            No operativas
+          </span>
+
+          <strong>
+            {{ viasNoOperativas }}
+          </strong>
+
+        </div>
+
+      </article>
+
+    </section>
+
+
+    <!-- ========================================
+         DATOS GENERALES
+         ======================================== -->
+
+    <section class="content-section">
+
+      <div class="section-heading">
+
+        <div class="section-number">
+          01
+        </div>
+
+        <div>
+
+          <h2>
+            Datos del relevo
+          </h2>
+
+          <p>
+            Información general del registro.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="general-card">
+
+        <div class="info-item">
+
+          <span class="info-label">
+            Plaza
+          </span>
+
+          <strong>
+            {{ relevo.plazaCodigo }}
+          </strong>
+
+          @if (relevo.plazaDescripcion) {
+            <small>
+              {{ relevo.plazaDescripcion }}
+            </small>
+          }
+
+        </div>
+
+
+        <div class="info-item">
+
+          <span class="info-label">
+            Turno
+          </span>
+
+          <strong>
+            {{ relevo.turnoCodigo }}
+          </strong>
+
+          <small>
+            {{ relevo.turnoNombre }}
+          </small>
+
+        </div>
+
+
+        <div class="info-item operator-item">
+
+          <span class="info-label">
+            Operador
+          </span>
+
+          <strong>
+            {{ relevo.operadorNombre }}
+          </strong>
+
+          <small>
+            Código {{ relevo.operadorCodigo }}
+          </small>
+
+        </div>
+
+
+        <div class="info-item">
+
+          <span class="info-label">
+            Fecha
+          </span>
+
+          <strong>
+            {{ relevo.fecha }}
+          </strong>
+
+        </div>
+
+
+        <div class="info-item">
+
+          <span class="info-label">
+            Hora
+          </span>
+
+          <strong>
+            {{ relevo.hora }}
+          </strong>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ========================================
+         BASE OPERATIVA
+         ======================================== -->
+
+    <section class="content-section">
+
+      <div class="section-heading">
+
+        <div class="section-number">
+          02
+        </div>
+
+        <div>
+
+          <h2>
+            Base operativa
+          </h2>
+
+          <p>
+            Estado de baños, lavadero y refrigeradora.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      @if (baseOperativa.length === 0) {
+
+        <div class="empty-state">
+
+          <div class="empty-icon">
+            —
+          </div>
+
+          <strong>
+            Sin registros
+          </strong>
+
+          <p>
+            No existen elementos de base operativa en este relevo.
+          </p>
+
+        </div>
+
+      } @else {
+
+        <div class="equipment-grid">
+
+          @for (
+            item of baseOperativa;
+            track item.id
+          ) {
+
+            <article class="equipment-card">
+
+              <div class="equipment-top">
+
+                <div class="equipment-title">
+
+                  <div class="equipment-icon">
+                    @if (item.codigo === 'BANOS') {
+                      WC
+                    } @else if (item.codigo === 'LAVADERO') {
+                      LV
+                    } @else {
+                      RF
+                    }
+                  </div>
+
+                  <div>
+
+                    <h3>
+                      {{ item.nombre }}
+                    </h3>
+
+                    <span>
+                      {{ item.codigo }}
+                    </span>
+
+                  </div>
+
+                </div>
+
+
+                <span
+                  class="status-badge"
+                  [ngClass]="estadoClase(item.estado)"
+                >
+                  <span class="status-dot"></span>
+                  {{ estadoLabel(item.estado) }}
+                </span>
+
+              </div>
+
+
+              @if (item.detalle) {
+
+                <div class="observation-box">
+
+                  <span>
+                    Detalle registrado
+                  </span>
+
+                  <p>
+                    {{ item.detalle }}
+                  </p>
+
+                </div>
+
+              }
+
+
+              <div class="evidence-block">
+
+                <div class="evidence-title">
+
+                  <span>
+                    Evidencias
+                  </span>
+
+                  @if (
+                    item.evidencias &&
+                    item.evidencias.length > 0
+                  ) {
+
+                    <small>
+                      {{ item.evidencias.length }}
+                    </small>
+
+                  }
+
+                </div>
+
+
+                @if (
+                  item.evidencias &&
+                  item.evidencias.length > 0
+                ) {
+
+                  <div class="photo-grid">
+
+                    @for (
+                      foto of item.evidencias;
+                      track foto.id
+                    ) {
+
+                      <a
+                        class="photo-card"
+                        [href]="foto.urlArchivo"
+                        target="_blank"
+                        rel="noopener"
+                      >
+
+                        <img
+                          [src]="foto.urlArchivo"
+                          [alt]="'Evidencia de ' + item.nombre"
+                        >
+
+                        <div class="photo-overlay">
+                          Ver evidencia
+                        </div>
+
+                      </a>
+
+                    }
+
+                  </div>
+
+                } @else {
+
+                  <div class="no-evidence">
+                    Sin evidencia fotográfica
+                  </div>
+
+                }
+
+              </div>
+
+            </article>
+
+          }
+
+        </div>
+
+      }
+
+    </section>
+
+
+    <!-- ========================================
+         PLAZA DE PEAJE
+         ======================================== -->
+
+    <section class="content-section">
+
+      <div class="section-heading">
+
+        <div class="section-number">
+          03
+        </div>
+
+        <div>
+
+          <h2>
+            Plaza de peaje
+          </h2>
+
+          <p>
+            Elementos ubicados fuera de la base operativa.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      @if (plazaPeaje.length === 0) {
+
+        <div class="empty-state">
+
+          <strong>
+            Sin registros
+          </strong>
+
+          <p>
+            No existen elementos registrados en plaza de peaje.
+          </p>
+
+        </div>
+
+      } @else {
+
+        <div class="equipment-grid">
+
+          @for (
+            item of plazaPeaje;
+            track item.id
+          ) {
+
+            <article class="equipment-card">
+
+              <div class="equipment-top">
+
+                <div class="equipment-title">
+
+                  <div class="equipment-icon cones-icon">
+                    ▲
+                  </div>
+
+                  <div>
+
+                    <h3>
+                      {{ item.nombre }}
+                    </h3>
+
+                    <span>
+                      {{ item.codigo }}
+                    </span>
+
+                  </div>
+
+                </div>
+
+
+                <span
+                  class="status-badge"
+                  [ngClass]="estadoClase(item.estado)"
+                >
+                  <span class="status-dot"></span>
+                  {{ estadoLabel(item.estado) }}
+                </span>
+
+              </div>
+
+
+              @if (
+                item.cantidad !== null &&
+                item.cantidad !== undefined
+              ) {
+
+                <div class="quantity-card">
+
+                  <div>
+
+                    <span>
+                      Cantidad registrada
+                    </span>
+
+                    <p>
+                      Elementos contabilizados
+                    </p>
+
+                  </div>
+
+                  <strong>
+                    {{ item.cantidad }}
+                  </strong>
+
+                </div>
+
+              }
+
+
+              @if (item.detalle) {
+
+                <div class="observation-box">
+
+                  <span>
+                    Detalle registrado
+                  </span>
+
+                  <p>
+                    {{ item.detalle }}
+                  </p>
+
+                </div>
+
+              }
+
+
+              <div class="evidence-block">
+
+                <div class="evidence-title">
+
+                  <span>
+                    Evidencias
+                  </span>
+
+                  @if (
+                    item.evidencias &&
+                    item.evidencias.length > 0
+                  ) {
+
+                    <small>
+                      {{ item.evidencias.length }}
+                    </small>
+
+                  }
+
+                </div>
+
+
+                @if (
+                  item.evidencias &&
+                  item.evidencias.length > 0
+                ) {
+
+                  <div class="photo-grid">
+
+                    @for (
+                      foto of item.evidencias;
+                      track foto.id
+                    ) {
+
+                      <a
+                        class="photo-card"
+                        [href]="foto.urlArchivo"
+                        target="_blank"
+                        rel="noopener"
+                      >
+
+                        <img
+                          [src]="foto.urlArchivo"
+                          alt="Evidencia"
+                        >
+
+                        <div class="photo-overlay">
+                          Ver evidencia
+                        </div>
+
+                      </a>
+
+                    }
+
+                  </div>
+
+                } @else {
+
+                  <div class="no-evidence">
+                    Sin evidencia fotográfica
+                  </div>
+
+                }
+
+              </div>
+
+            </article>
+
+          }
+
+        </div>
+
+      }
+
+    </section>
+
+
+    <!-- ========================================
+         VÍAS
+         ======================================== -->
+
+    <section class="content-section">
+
+      <div class="section-heading section-heading-inline">
+
+        <div class="section-heading-left">
+
+          <div class="section-number">
+            04
+          </div>
+
+          <div>
+
+            <h2>
+              Estado de vías
+            </h2>
+
+            <p>
+              Estado registrado de cada vía de la plaza.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="section-counter">
+
+          <strong>
+            {{ totalVias }}
+          </strong>
+
+          <span>
+            vías
+          </span>
+
+        </div>
+
+      </div>
+
+
+      @if (relevo.vias.length === 0) {
+
+        <div class="empty-state">
+
+          <strong>
+            No hay vías registradas
+          </strong>
+
+          <p>
+            Este relevo no contiene información de vías.
+          </p>
+
+        </div>
+
+      } @else {
+
+        <div class="roads-grid">
+
+          @for (
+            via of relevo.vias;
+            track via.id
+          ) {
+
+            <article
+              class="road-card"
+              [ngClass]="estadoClase(via.estado)"
+            >
+
+              <div class="road-accent"></div>
+
+
+              <div class="road-content">
+
+                <div class="road-top">
+
+                  <div>
+
+                    <span class="road-label">
+                      VÍA
+                    </span>
+
+                    <div class="road-number">
+                      {{ via.numero }}
+                    </div>
+
+                    @if (via.nombre) {
+                      <span class="road-type">
+                        {{ via.nombre }}
+                      </span>
+                    }
+
+                  </div>
+
+
+                  <span
+                    class="status-badge"
+                    [ngClass]="estadoClase(via.estado)"
+                  >
+                    <span class="status-dot"></span>
+                    {{ estadoLabel(via.estado) }}
+                  </span>
+
+                </div>
+
+
+                @if (via.detalle) {
+
+                  <div class="road-detail">
+
+                    <span>
+                      Detalle
+                    </span>
+
+                    <p>
+                      {{ via.detalle }}
+                    </p>
+
+                  </div>
+
+                }
+
+
+                @if (
+                  via.evidencias &&
+                  via.evidencias.length > 0
+                ) {
+
+                  <div class="road-evidence">
+
+                    <span class="evidence-mini-label">
+                      Evidencias
+                    </span>
+
+                    <div class="photo-grid compact">
+
+                      @for (
+                        foto of via.evidencias;
+                        track foto.id
+                      ) {
+
+                        <a
+                          class="photo-card"
+                          [href]="foto.urlArchivo"
+                          target="_blank"
+                          rel="noopener"
+                        >
+
+                          <img
+                            [src]="foto.urlArchivo"
+                            [alt]="'Evidencia vía ' + via.numero"
+                          >
+
+                          <div class="photo-overlay">
+                            Ver
+                          </div>
+
+                        </a>
+
+                      }
+
+                    </div>
+
+                  </div>
+
+                }
+
+              </div>
+
+            </article>
+
+          }
+
+        </div>
+
+      }
+
+    </section>
+
+
+    <!-- ========================================
+         OBSERVACIONES
+         ======================================== -->
+
+    <section class="content-section final-section">
+
+      <div class="section-heading">
+
+        <div class="section-number">
+          05
+        </div>
+
+        <div>
+
+          <h2>
+            Observaciones y resumen
+          </h2>
+
+          <p>
+            Información adicional registrada durante el relevo.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="notes-grid">
+
+        <article class="note-card">
+
+          <div class="note-icon">
+            !
+          </div>
+
+          <div>
+
+            <span>
+              Observaciones
+            </span>
+
+            <p>
+              {{
+                relevo.observaciones
+                || 'Sin observaciones adicionales.'
+              }}
+            </p>
+
+          </div>
+
+        </article>
+
+
+        <article class="note-card summary-note">
+
+          <div class="note-icon">
+            ✓
+          </div>
+
+          <div>
+
+            <span>
+              Resumen del relevo
+            </span>
+
+            <p>
+              {{
+                relevo.resumen
+                || 'Sin resumen registrado.'
+              }}
+            </p>
+
+          </div>
+
+        </article>
+
+      </div>
+
+    </section>
+
+
+    <!-- ========================================
+         FOOTER
+         ======================================== -->
+
+    <footer class="detail-footer">
+
+      <span>
+        Relevo #{{ relevo.id }}
+      </span>
+
+      <span>
+        Registrado el
+        {{ relevo.createdAt | date:'dd/MM/yyyy HH:mm' }}
+      </span>
+
+    </footer>
+
+  }
+
+</div>

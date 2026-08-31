@@ -1,0 +1,399 @@
+<div class="history-page">
+
+  <!-- ==========================================
+       HEADER
+       ========================================== -->
+
+  <header class="page-header">
+
+    <div class="header-content">
+
+      <p class="eyebrow">
+        RELEVOS
+      </p>
+
+      <h1>
+        Historial de relevos
+      </h1>
+
+      <p class="subtitle">
+        Consulta y revisa los relevos registrados en las plazas de peaje.
+      </p>
+
+    </div>
+
+
+    <a
+      class="new-button"
+      routerLink="/nuevo-relevo"
+    >
+      <span class="plus">
+        +
+      </span>
+
+      Nuevo relevo
+    </a>
+
+  </header>
+
+
+  <!-- ==========================================
+       FILTROS
+       ========================================== -->
+
+  <section class="filters-card">
+
+    <div class="filters-header">
+
+      <div>
+
+        <span class="filters-title">
+          Filtrar registros
+        </span>
+
+        <p>
+          Selecciona el rango de fechas que deseas consultar.
+        </p>
+
+      </div>
+
+
+      <div class="result-count">
+
+        <strong>
+          {{ totalRelevos }}
+        </strong>
+
+        <span>
+          registros
+        </span>
+
+      </div>
+
+    </div>
+
+
+    <div class="filters-row">
+
+      <label class="filter-field">
+
+        <span>
+          Desde
+        </span>
+
+        <div class="input-wrapper">
+
+          <input
+            type="date"
+            [(ngModel)]="inicio"
+          >
+
+        </div>
+
+      </label>
+
+
+      <div class="date-separator">
+        →
+      </div>
+
+
+      <label class="filter-field">
+
+        <span>
+          Hasta
+        </span>
+
+        <div class="input-wrapper">
+
+          <input
+            type="date"
+            [(ngModel)]="fin"
+          >
+
+        </div>
+
+      </label>
+
+
+      <div class="filter-actions">
+
+        <button
+          type="button"
+          class="search-button"
+          (click)="buscar()"
+        >
+          Buscar
+        </button>
+
+
+        <button
+          type="button"
+          class="reset-button"
+          (click)="restaurarFechas()"
+        >
+          Ayer - Hoy
+        </button>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ==========================================
+       ERROR
+       ========================================== -->
+
+  @if (error) {
+
+    <div class="error-card">
+
+      <div class="error-icon">
+        !
+      </div>
+
+      <div>
+
+        <strong>
+          No se pudo cargar el historial
+        </strong>
+
+        <p>
+          {{ error }}
+        </p>
+
+      </div>
+
+    </div>
+
+  }
+
+
+  <!-- ==========================================
+       LOADING
+       ========================================== -->
+
+  @if (cargando) {
+
+    <div class="state-card">
+
+      <div class="loader"></div>
+
+      <strong>
+        Cargando relevos...
+      </strong>
+
+      <span>
+        Obteniendo los registros del periodo seleccionado.
+      </span>
+
+    </div>
+
+  } @else if (
+    relevos.length === 0
+  ) {
+
+    <!-- ========================================
+         EMPTY
+         ======================================== -->
+
+    <div class="state-card empty-state">
+
+      <div class="empty-icon">
+        —
+      </div>
+
+      <strong>
+        No hay relevos para mostrar
+      </strong>
+
+      <span>
+        No se encontraron registros dentro del rango seleccionado.
+      </span>
+
+    </div>
+
+  } @else {
+
+    <!-- ========================================
+         LISTA
+         ======================================== -->
+
+    <section class="history-list">
+
+      @for (
+        r of relevos;
+        track r.id
+      ) {
+
+        <article class="relevo-card">
+
+          <!-- IZQUIERDA -->
+
+          <div class="card-main">
+
+            <div class="relevo-number">
+
+              <span>
+                RELEVO
+              </span>
+
+              <strong>
+                #{{ r.id }}
+              </strong>
+
+            </div>
+
+
+            <div class="plaza-info">
+
+              <div class="plaza-title">
+
+                <h3>
+                  {{ r.plazaCodigo }}
+                </h3>
+
+                @if (
+                  r.plazaDescripcion
+                ) {
+
+                  <span>
+                    {{ r.plazaDescripcion }}
+                  </span>
+
+                }
+
+              </div>
+
+
+              <div class="date-info">
+
+                <span>
+                  {{ r.fecha }}
+                </span>
+
+                <span class="dot">
+                  •
+                </span>
+
+                <span>
+                  {{ r.hora }}
+                </span>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- INFORMACIÓN -->
+
+          <div class="card-details">
+
+            <div class="detail-item">
+
+              <span>
+                Turno
+              </span>
+
+              <strong>
+                {{ r.turnoCodigo }}
+              </strong>
+
+              <small>
+                {{ r.turnoNombre }}
+              </small>
+
+            </div>
+
+
+            <div class="detail-item operator-detail">
+
+              <span>
+                Operador
+              </span>
+
+              <strong>
+                {{ r.operadorNombre }}
+              </strong>
+
+              <small>
+                Código {{ r.operadorCodigo }}
+              </small>
+
+            </div>
+
+
+            <div class="detail-item">
+
+              <span>
+                Vías
+              </span>
+
+              <strong>
+                {{ totalVias(r) }}
+              </strong>
+
+              <small>
+                registradas
+              </small>
+
+            </div>
+
+
+            <div class="detail-item">
+
+              <span>
+                Con observación
+              </span>
+
+              <strong
+                [class.has-alert]="
+                  viasConObservacion(r) > 0
+                "
+              >
+                {{ viasConObservacion(r) }}
+              </strong>
+
+              <small>
+                vías
+              </small>
+
+            </div>
+
+          </div>
+
+
+          <!-- ACCIÓN -->
+
+          <div class="card-actions">
+
+            <a
+              class="detail-button"
+              [routerLink]="[
+                '/relevos',
+                r.id
+              ]"
+            >
+              Ver detalle
+
+              <span>
+                →
+              </span>
+
+            </a>
+
+          </div>
+
+        </article>
+
+      }
+
+    </section>
+
+  }
+
+</div>

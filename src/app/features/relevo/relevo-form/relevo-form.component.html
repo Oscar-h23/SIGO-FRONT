@@ -1,0 +1,1382 @@
+<div class="relevo-page">
+
+  <!-- ===================================================
+       HEADER
+       =================================================== -->
+
+  <header class="page-header">
+
+    <div class="header-copy">
+
+      <p class="eyebrow">
+        OPERACIONES · RELEVOS
+      </p>
+
+      <h1>
+        Nuevo relevo
+      </h1>
+
+      <p class="subtitle">
+        Registra el estado de la base operativa,
+        la plaza de peaje y todas las vías de la plaza.
+      </p>
+
+    </div>
+
+    <div class="header-badge">
+      Registro operativo
+    </div>
+
+  </header>
+
+
+  <!-- ===================================================
+       MENSAJES
+       =================================================== -->
+
+  @if (cargando) {
+
+    <div class="loading-card">
+
+      <span class="spinner"></span>
+
+      <div>
+
+        <strong>
+          Preparando nuevo relevo
+        </strong>
+
+        <p>
+          Cargando plazas, turnos, operadores y elementos...
+        </p>
+
+      </div>
+
+    </div>
+
+  }
+
+
+  @if (mensaje) {
+
+    <div class="notice success">
+
+      <span class="notice-icon">
+        ✓
+      </span>
+
+      <div>
+
+        <strong>
+          Registro completado
+        </strong>
+
+        <p>
+          {{ mensaje }}
+        </p>
+
+      </div>
+
+    </div>
+
+  }
+
+
+  @if (error) {
+
+    <div class="notice error">
+
+      <span class="notice-icon">
+        !
+      </span>
+
+      <div>
+
+        <strong>
+          Revisa la información
+        </strong>
+
+        <p>
+          {{ error }}
+        </p>
+
+      </div>
+
+    </div>
+
+  }
+
+
+  <form
+    [formGroup]="form"
+    (ngSubmit)="guardar()"
+  >
+
+
+    <!-- =================================================
+         1. DATOS GENERALES
+         ================================================= -->
+
+    <section class="section-card">
+
+      <div class="section-heading">
+
+        <div class="section-number">
+          01
+        </div>
+
+        <div>
+
+          <p class="section-kicker">
+            IDENTIFICACIÓN
+          </p>
+
+          <h2>
+            Datos del relevo
+          </h2>
+
+          <p>
+            Información general del turno que realiza el registro.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="form-grid">
+
+
+        <label class="field">
+
+          <span class="field-label">
+            Plaza
+            <b>*</b>
+          </span>
+
+          <select
+            formControlName="plazaId"
+          >
+
+            <option
+              [ngValue]="null"
+            >
+              Seleccionar plaza
+            </option>
+
+            @for (
+              plaza of plazas;
+              track plaza.id
+            ) {
+
+              <option
+                [ngValue]="plaza.id"
+              >
+                {{ plaza.codigo }} - {{ plaza.descripcion }}
+              </option>
+
+            }
+
+          </select>
+
+        </label>
+
+
+        <label class="field">
+
+          <span class="field-label">
+            Turno
+            <b>*</b>
+          </span>
+
+          <select
+            formControlName="turnoId"
+          >
+
+            <option
+              [ngValue]="null"
+            >
+              Seleccionar turno
+            </option>
+
+            @for (
+              turno of turnos;
+              track turno.id
+            ) {
+
+              <option
+                [ngValue]="turno.id"
+              >
+                {{ turno.codigo }} - {{ turno.nombre }}
+              </option>
+
+            }
+
+          </select>
+
+        </label>
+
+
+        <label class="field field-wide">
+
+          <span class="field-label">
+            Operador
+            <b>*</b>
+          </span>
+
+          <select
+            formControlName="operadorId"
+          >
+
+            <option
+              [ngValue]="null"
+            >
+              Seleccionar operador
+            </option>
+
+            @for (
+              operador of operadores;
+              track operador.id
+            ) {
+
+              <option
+                [ngValue]="operador.id"
+              >
+                {{ operador.codigo }} - {{ operador.nombreCompleto }}
+              </option>
+
+            }
+
+          </select>
+
+        </label>
+
+
+        <label class="field">
+
+          <span class="field-label">
+            Fecha
+            <b>*</b>
+          </span>
+
+          <input
+            type="date"
+            formControlName="fecha"
+          >
+
+        </label>
+
+
+        <label class="field">
+
+          <span class="field-label">
+            Hora
+            <b>*</b>
+          </span>
+
+          <input
+            type="time"
+            formControlName="hora"
+          >
+
+        </label>
+
+      </div>
+
+    </section>
+
+
+    <!-- =================================================
+         2. BASE OPERATIVA
+         ================================================= -->
+
+    <section
+      class="section-card"
+      formArrayName="checklist"
+    >
+
+      <div class="section-heading">
+
+        <div class="section-number">
+          02
+        </div>
+
+        <div>
+
+          <p class="section-kicker">
+            DENTRO DE BASE
+          </p>
+
+          <h2>
+            Base operativa
+          </h2>
+
+          <p>
+            Revisa baños, lavadero y refrigeradora.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="cards-grid">
+
+        @for (
+          item
+            of elementosCategoria(
+              'BASE_OPERATIVA'
+            );
+          track item.elemento.id
+        ) {
+
+          <article
+            class="inspection-card"
+            [formGroupName]="item.index"
+          >
+
+            <div class="inspection-header">
+
+              <div class="inspection-icon">
+                @if (
+                  item.elemento.codigo === 'BANOS'
+                ) {
+                  WC
+                } @else if (
+                  item.elemento.codigo === 'LAVADERO'
+                ) {
+                  LV
+                } @else {
+                  RF
+                }
+              </div>
+
+              <div>
+
+                <h3>
+                  {{ item.elemento.nombre }}
+                </h3>
+
+                <p>
+                  Selecciona el estado encontrado.
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div class="states">
+
+              @for (
+                estado of estados;
+                track estado.value
+              ) {
+
+                <label
+                  class="state"
+
+                  [class.operativo]="
+                    estado.value === 'OPERATIVO'
+                  "
+
+                  [class.observado]="
+                    estado.value === 'OBSERVADO'
+                  "
+
+                  [class.no-operativo]="
+                    estado.value === 'NO_OPERATIVO'
+                  "
+
+                  [class.active]="
+                    checklist
+                      .at(item.index)
+                      .get('estado')
+                      ?.value
+                    ===
+                    estado.value
+                  "
+                >
+
+                  <input
+                    type="radio"
+                    formControlName="estado"
+                    [value]="estado.value"
+                  >
+
+                  <span class="state-dot"></span>
+
+                  <span>
+                    {{ estado.label }}
+                  </span>
+
+                </label>
+
+              }
+
+            </div>
+
+
+            <label class="field">
+
+              <span class="field-label">
+
+                Detalle
+
+                @if (
+                  checklist
+                    .at(item.index)
+                    .get('estado')
+                    ?.value
+                  !==
+                  'OPERATIVO'
+                ) {
+
+                  <b>*</b>
+
+                }
+
+              </span>
+
+              <textarea
+                rows="3"
+                formControlName="detalle"
+
+                [placeholder]="
+                  checklist
+                    .at(item.index)
+                    .get('estado')
+                    ?.value
+                  ===
+                  'OPERATIVO'
+
+                    ? 'Sin observaciones (opcional)'
+
+                    : 'Describe la observación encontrada'
+                "
+              ></textarea>
+
+              @if (
+                checklist
+                  .at(item.index)
+                  .get('estado')
+                  ?.value
+                !==
+                'OPERATIVO'
+              ) {
+
+                <small class="field-help warning">
+                  El detalle es obligatorio para este estado.
+                </small>
+
+              }
+
+            </label>
+
+
+            <div class="evidence-block">
+
+              <div class="evidence-copy">
+
+                <strong>
+                  Evidencia fotográfica
+                </strong>
+
+                <span>
+                  Opcional · JPG, PNG u otras imágenes · máx. 10 MB c/u
+                </span>
+
+              </div>
+
+
+              <label class="upload-control">
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+
+                  (change)="
+                    seleccionarFotosChecklist(
+                      item.index,
+                      $event
+                    )
+                  "
+                >
+
+                <span class="upload-icon">
+                  +
+                </span>
+
+                <span>
+                  Agregar fotos
+                </span>
+
+              </label>
+
+
+              @if (
+                (archivosChecklist
+                  .get(item.index)
+                  ?.length ?? 0) > 0
+              ) {
+
+                <div class="preview-list">
+
+                  @for (
+                    foto
+                      of archivosChecklist
+                        .get(item.index)
+                        ?? [];
+                    track foto.url;
+                    let fi = $index
+                  ) {
+
+                    <div class="preview">
+
+                      <img
+                        [src]="foto.url"
+                        alt="Evidencia"
+                      >
+
+                      <button
+                        type="button"
+                        aria-label="Quitar fotografía"
+
+                        (click)="
+                          quitarFotoChecklist(
+                            item.index,
+                            fi
+                          )
+                        "
+                      >
+                        ×
+                      </button>
+
+                    </div>
+
+                  }
+
+                </div>
+
+              }
+
+            </div>
+
+          </article>
+
+        }
+
+      </div>
+
+    </section>
+
+
+    <!-- =================================================
+         3. PLAZA DE PEAJE
+         ================================================= -->
+
+    <section
+      class="section-card"
+      formArrayName="checklist"
+    >
+
+      <div class="section-heading">
+
+        <div class="section-number">
+          03
+        </div>
+
+        <div>
+
+          <p class="section-kicker">
+            FUERA DE BASE
+          </p>
+
+          <h2>
+            Plaza de peaje
+          </h2>
+
+          <p>
+            Control de los elementos ubicados en la plaza.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="cards-grid">
+
+        @for (
+          item
+            of elementosCategoria(
+              'PLAZA_PEAJE'
+            );
+          track item.elemento.id
+        ) {
+
+          <article
+            class="inspection-card"
+            [formGroupName]="item.index"
+          >
+
+            <div class="inspection-header">
+
+              <div class="inspection-icon cone">
+                ▲
+              </div>
+
+              <div>
+
+                <h3>
+                  {{ item.elemento.nombre }}
+                </h3>
+
+                <p>
+                  Estado y cantidad disponible.
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div class="states">
+
+              @for (
+                estado of estados;
+                track estado.value
+              ) {
+
+                <label
+                  class="state"
+
+                  [class.operativo]="
+                    estado.value === 'OPERATIVO'
+                  "
+
+                  [class.observado]="
+                    estado.value === 'OBSERVADO'
+                  "
+
+                  [class.no-operativo]="
+                    estado.value === 'NO_OPERATIVO'
+                  "
+
+                  [class.active]="
+                    checklist
+                      .at(item.index)
+                      .get('estado')
+                      ?.value
+                    ===
+                    estado.value
+                  "
+                >
+
+                  <input
+                    type="radio"
+                    formControlName="estado"
+                    [value]="estado.value"
+                  >
+
+                  <span class="state-dot"></span>
+
+                  <span>
+                    {{ estado.label }}
+                  </span>
+
+                </label>
+
+              }
+
+            </div>
+
+
+            @if (
+              item.elemento.requiereCantidad
+            ) {
+
+              <label class="field quantity-field">
+
+                <span class="field-label">
+                  Cantidad
+                  <b>*</b>
+                </span>
+
+                <input
+                  type="number"
+                  min="0"
+                  inputmode="numeric"
+                  formControlName="cantidad"
+                >
+
+              </label>
+
+            }
+
+
+            <label class="field">
+
+              <span class="field-label">
+
+                Detalle
+
+                @if (
+                  checklist
+                    .at(item.index)
+                    .get('estado')
+                    ?.value
+                  !==
+                  'OPERATIVO'
+                ) {
+
+                  <b>*</b>
+
+                }
+
+              </span>
+
+              <textarea
+                rows="3"
+                formControlName="detalle"
+
+                [placeholder]="
+                  checklist
+                    .at(item.index)
+                    .get('estado')
+                    ?.value
+                  ===
+                  'OPERATIVO'
+
+                    ? 'Sin observaciones (opcional)'
+
+                    : 'Describe la observación encontrada'
+                "
+              ></textarea>
+
+            </label>
+
+
+            <div class="evidence-block">
+
+              <div class="evidence-copy">
+
+                <strong>
+                  Evidencia fotográfica
+                </strong>
+
+                <span>
+                  Opcional · puedes agregar varias fotos.
+                </span>
+
+              </div>
+
+
+              <label class="upload-control">
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+
+                  (change)="
+                    seleccionarFotosChecklist(
+                      item.index,
+                      $event
+                    )
+                  "
+                >
+
+                <span class="upload-icon">
+                  +
+                </span>
+
+                <span>
+                  Agregar fotos
+                </span>
+
+              </label>
+
+
+              @if (
+                (archivosChecklist
+                  .get(item.index)
+                  ?.length ?? 0) > 0
+              ) {
+
+                <div class="preview-list">
+
+                  @for (
+                    foto
+                      of archivosChecklist
+                        .get(item.index)
+                        ?? [];
+                    track foto.url;
+                    let fi = $index
+                  ) {
+
+                    <div class="preview">
+
+                      <img
+                        [src]="foto.url"
+                        alt="Evidencia"
+                      >
+
+                      <button
+                        type="button"
+                        aria-label="Quitar fotografía"
+
+                        (click)="
+                          quitarFotoChecklist(
+                            item.index,
+                            fi
+                          )
+                        "
+                      >
+                        ×
+                      </button>
+
+                    </div>
+
+                  }
+
+                </div>
+
+              }
+
+            </div>
+
+          </article>
+
+        }
+
+      </div>
+
+    </section>
+
+
+    <!-- =================================================
+         4. VÍAS
+         ================================================= -->
+
+    <section class="section-card">
+
+      <div class="section-heading section-heading-vias">
+
+        <div class="section-title-group">
+
+          <div class="section-number">
+            04
+          </div>
+
+          <div>
+
+            <p class="section-kicker">
+              PLAZA SELECCIONADA
+            </p>
+
+            <h2>
+              Estado de vías
+            </h2>
+
+            <p>
+              Todas las vías se cargan automáticamente desde la base de datos.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        @if (
+          form.controls.plazaId.value
+          &&
+          !cargandoVias
+          &&
+          vias.length > 0
+        ) {
+
+          <div class="via-summary">
+
+            <div>
+              <strong>
+                {{ totalVias }}
+              </strong>
+              <span>
+                Total
+              </span>
+            </div>
+
+            <div>
+              <strong class="summary-warning">
+                {{ viasObservadas }}
+              </strong>
+              <span>
+                Observadas
+              </span>
+            </div>
+
+            <div>
+              <strong class="summary-danger">
+                {{ viasNoOperativas }}
+              </strong>
+              <span>
+                No operativas
+              </span>
+            </div>
+
+          </div>
+
+        }
+
+      </div>
+
+
+      @if (
+        !form.controls.plazaId.value
+      ) {
+
+        <div class="empty-state">
+
+          <div class="empty-icon">
+            ↳
+          </div>
+
+          <div>
+
+            <strong>
+              Selecciona una plaza
+            </strong>
+
+            <p>
+              Las vías correspondientes aparecerán automáticamente aquí.
+            </p>
+
+          </div>
+
+        </div>
+
+      } @else if (
+        cargandoVias
+      ) {
+
+        <div class="loading-vias">
+
+          <span class="spinner"></span>
+
+          <div>
+
+            <strong>
+              Cargando vías
+            </strong>
+
+            <p>
+              Consultando las vías registradas para esta plaza...
+            </p>
+
+          </div>
+
+        </div>
+
+      } @else if (
+        vias.length === 0
+      ) {
+
+        <div class="empty-state">
+
+          <div class="empty-icon">
+            —
+          </div>
+
+          <div>
+
+            <strong>
+              Esta plaza no tiene vías registradas
+            </strong>
+
+            <p>
+              Verifica la configuración de vías en la base de datos.
+            </p>
+
+          </div>
+
+        </div>
+
+      } @else {
+
+        <div
+          class="vias-grid"
+          formArrayName="vias"
+        >
+
+          @for (
+            viaControl
+              of vias.controls;
+            track viasDisponibles[$index]?.id ?? $index;
+            let i = $index
+          ) {
+
+            <article
+              class="via-card"
+
+              [class.via-observada]="
+                viaControl
+                  .get('estado')
+                  ?.value
+                ===
+                'OBSERVADO'
+              "
+
+              [class.via-no-operativa]="
+                viaControl
+                  .get('estado')
+                  ?.value
+                ===
+                'NO_OPERATIVO'
+              "
+
+              [formGroupName]="i"
+            >
+
+              <div class="via-header">
+
+                <div class="via-number">
+
+                  <span>
+                    VÍA
+                  </span>
+
+                  <strong>
+                    {{ viasDisponibles[i]?.numero }}
+                  </strong>
+
+                </div>
+
+                <div class="via-name">
+
+                  <strong>
+                    {{ viasDisponibles[i]?.nombre || 'Vía de peaje' }}
+                  </strong>
+
+                  <span>
+                    Registro individual
+                  </span>
+
+                </div>
+
+              </div>
+
+
+              <div class="states compact-states">
+
+                @for (
+                  estado of estados;
+                  track estado.value
+                ) {
+
+                  <label
+                    class="state"
+
+                    [class.operativo]="
+                      estado.value === 'OPERATIVO'
+                    "
+
+                    [class.observado]="
+                      estado.value === 'OBSERVADO'
+                    "
+
+                    [class.no-operativo]="
+                      estado.value === 'NO_OPERATIVO'
+                    "
+
+                    [class.active]="
+                      viaControl
+                        .get('estado')
+                        ?.value
+                      ===
+                      estado.value
+                    "
+                  >
+
+                    <input
+                      type="radio"
+                      formControlName="estado"
+                      [value]="estado.value"
+                    >
+
+                    <span class="state-dot"></span>
+
+                    <span>
+                      {{ estado.label }}
+                    </span>
+
+                  </label>
+
+                }
+
+              </div>
+
+
+              <label class="field">
+
+                <span class="field-label">
+
+                  Detalle
+
+                  @if (
+                    viaControl
+                      .get('estado')
+                      ?.value
+                    !==
+                    'OPERATIVO'
+                  ) {
+
+                    <b>*</b>
+
+                  }
+
+                </span>
+
+                <textarea
+                  rows="3"
+                  formControlName="detalle"
+
+                  [placeholder]="
+                    viaControl
+                      .get('estado')
+                      ?.value
+                    ===
+                    'OPERATIVO'
+
+                      ? 'Sin observaciones (opcional)'
+
+                      : 'Describe el problema encontrado en la vía'
+                  "
+                ></textarea>
+
+              </label>
+
+
+              <div class="evidence-block evidence-compact">
+
+                <div class="evidence-copy">
+
+                  <strong>
+                    Fotos de evidencia
+                  </strong>
+
+                  <span>
+                    Opcional.
+                  </span>
+
+                </div>
+
+
+                <label class="upload-control">
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+
+                    (change)="
+                      seleccionarFotosVia(
+                        i,
+                        $event
+                      )
+                    "
+                  >
+
+                  <span class="upload-icon">
+                    +
+                  </span>
+
+                  <span>
+                    Agregar fotos
+                  </span>
+
+                </label>
+
+
+                @if (
+                  (archivosVias
+                    .get(i)
+                    ?.length ?? 0) > 0
+                ) {
+
+                  <div class="preview-list">
+
+                    @for (
+                      foto
+                        of archivosVias
+                          .get(i)
+                          ?? [];
+                      track foto.url;
+                      let fi = $index
+                    ) {
+
+                      <div class="preview">
+
+                        <img
+                          [src]="foto.url"
+                          alt="Evidencia de vía"
+                        >
+
+                        <button
+                          type="button"
+                          aria-label="Quitar fotografía"
+
+                          (click)="
+                            quitarFotoVia(
+                              i,
+                              fi
+                            )
+                          "
+                        >
+                          ×
+                        </button>
+
+                      </div>
+
+                    }
+
+                  </div>
+
+                }
+
+              </div>
+
+            </article>
+
+          }
+
+        </div>
+
+      }
+
+    </section>
+
+
+    <!-- =================================================
+         5. OBSERVACIONES
+         ================================================= -->
+
+    <section class="section-card">
+
+      <div class="section-heading">
+
+        <div class="section-number">
+          05
+        </div>
+
+        <div>
+
+          <p class="section-kicker">
+            CIERRE DEL RELEVO
+          </p>
+
+          <h2>
+            Observaciones y resumen
+          </h2>
+
+          <p>
+            Registra información adicional relevante para el siguiente turno.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="notes-grid">
+
+        <label class="field">
+
+          <span class="field-label">
+            Observaciones
+          </span>
+
+          <textarea
+            rows="5"
+            formControlName="observaciones"
+            placeholder="Ej.: novedades adicionales, pendientes o información importante."
+          ></textarea>
+
+        </label>
+
+
+        <label class="field">
+
+          <span class="field-label">
+            Resumen
+          </span>
+
+          <textarea
+            rows="5"
+            formControlName="resumen"
+            placeholder="Resume brevemente el estado general del relevo."
+          ></textarea>
+
+        </label>
+
+      </div>
+
+    </section>
+
+
+    <!-- =================================================
+         GUARDAR
+         ================================================= -->
+
+    <div class="sticky-actions">
+
+      <div class="save-copy">
+
+        <strong>
+          ¿Todo listo?
+        </strong>
+
+        <span>
+          Verifica la información antes de registrar el relevo.
+        </span>
+
+      </div>
+
+
+      <button
+        class="save-button"
+        type="submit"
+
+        [disabled]="
+          guardando
+          ||
+          cargando
+          ||
+          cargandoVias
+        "
+      >
+
+        @if (guardando) {
+
+          <span class="button-spinner"></span>
+
+          Guardando relevo...
+
+        } @else {
+
+          Guardar relevo
+
+          <span>
+            →
+          </span>
+
+        }
+
+      </button>
+
+    </div>
+
+  </form>
+
+</div>
