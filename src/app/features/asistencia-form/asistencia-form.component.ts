@@ -38,11 +38,24 @@ export class AsistenciaFormComponent implements OnInit {
   private readonly api = inject(AsistenciaApiService);
 
   readonly loadingCatalogos = signal(true);
+
+  /*
+   * Nuevo:
+   * indica cuando estamos consultando los trabajadores
+   * correspondientes a la plaza seleccionada.
+   */
+  readonly loadingPersonal = signal(false);
+
   readonly saving = signal(false);
 
   readonly plazas = signal<Plaza[]>([]);
   readonly turnos = signal<Turno[]>([]);
   readonly motivos = signal<MotivoAusencia[]>([]);
+
+  /*
+   * Ahora estas listas solamente contienen
+   * trabajadores de la plaza seleccionada.
+   */
   readonly controladores = signal<Trabajador[]>([]);
   readonly agentes = signal<Trabajador[]>([]);
 
@@ -102,15 +115,31 @@ export class AsistenciaFormComponent implements OnInit {
 
   ngOnInit(): void {
 
+    /*
+     * Ahora getCatalogos solamente carga:
+     *
+     * - plazas
+     * - turnos
+     * - motivos
+     *
+     * Los trabajadores se cargarán cuando
+     * el usuario seleccione una plaza.
+     */
     this.api.getCatalogos().subscribe({
 
       next: (data) => {
 
-        this.plazas.set(data.plazas);
-        this.turnos.set(data.turnos);
-        this.motivos.set(data.motivos);
-        this.controladores.set(data.controladores);
-        this.agentes.set(data.agentes);
+        this.plazas.set(
+          data.plazas ?? []
+        );
+
+        this.turnos.set(
+          data.turnos ?? []
+        );
+
+        this.motivos.set(
+          data.motivos ?? []
+        );
 
         this.loadingCatalogos.set(false);
       },
@@ -126,49 +155,180 @@ export class AsistenciaFormComponent implements OnInit {
     });
 
     /*
+     * Cuando cambia la plaza:
+     *
+     * 1. Limpiar controlador seleccionado.
+     * 2. Limpiar trabajadores ausentes.
+     * 3. Limpiar listas anteriores.
+     * 4. Cargar agentes de la nueva plaza.
+     * 5. Cargar controladores de la nueva plaza.
+     */
+    this.form.controls.plazaId
+      .valueChanges
+      .subscribe((plazaId) => {
+
+        this.onPlazaChange(
+          plazaId
+        );
+      });
+
+    /*
      * Cuando cambia el turno:
      * cargar automáticamente el personal programado.
      */
-    this.form.controls.turnoId.valueChanges.subscribe(() => {
-      this.syncTurno();
-    });
+    this.form.controls.turnoId
+      .valueChanges
+      .subscribe(() => {
+
+        this.syncTurno();
+      });
 
     /*
      * Cuando el usuario modifica manualmente
      * el personal programado:
      * actualizar límites y ausencias.
      */
-    this.form.controls.programados.valueChanges.subscribe(() => {
-      this.syncProgramados();
-    });
+    this.form.controls.programados
+      .valueChanges
+      .subscribe(() => {
+
+        this.syncProgramados();
+      });
 
     /*
-     * Cuando cambia el número de presentes:
+     * Si cambia el número de presentes:
      * recalcular ausentes.
      */
-    this.form.controls.presentes.valueChanges.subscribe(() => {
-      this.syncAusencias();
-    });
+    this.form.controls.presentes
+      .valueChanges
+      .subscribe(() => {
+
+        this.syncAusencias();
+      });
+  }
+
+  /*
+   * Se ejecuta cuando cambia la plaza.
+   */
+  private onPlazaChange(
+    plazaId: number | null
+  ): void {
 
     /*
-     * Si cambia la plaza:
-     * limpiar trabajadores seleccionados.
+     * Limpiar selección anterior.
      */
-    this.form.controls.plazaId.valueChanges.subscribe(() => {
-      this.resetAusenciasTrabajadores();
+    this.form.controls.controladorId.setValue(
+      null,
+      {
+        emitEvent: false
+      }
+    );
+
+    this.resetAusenciasTrabajadores();
+
+    /*
+     * Vaciar personal de la plaza anterior.
+     */
+    this.controladores.set([]);
+    this.agentes.set([]);
+
+    /*
+     * Si no existe plaza seleccionada,
+     * no hacemos ninguna consulta.
+     */
+    if (!plazaId) {
+
+      this.loadingPersonal.set(false);
+
+      return;
+    }
+
+    /*
+     * Consultar únicamente trabajadores
+     * pertenecientes a esta plaza.
+     */
+    this.cargarPersonalPlaza(
+      Number(plazaId)
+    );
+  }
+
+  /*
+   * Carga agentes y controladores de una plaza
+   * en paralelo.
+   */
+  private cargarPersonalPlaza(
+    plazaId: number
+  ): void {
+
+    this.loadingPersonal.set(true);
+
+    forkJoin({
+
+      agentes:
+        this.api.getAgentesPorPlaza(
+          plazaId
+        ),
+
+      controladores:
+        this.api.getControladoresPorPlaza(
+          plazaId
+        )
+
+    }).subscribe({
+
+      next: ({
+        agentes,
+        controladores
+      }) => {
+
+        this.agentes.set(
+          agentes ?? []
+        );
+
+        this.controladores.set(
+          controladores ?? []
+        );
+
+        this.loadingPersonal.set(false);
+
+        console.log(
+          `Personal cargado para plaza ${plazaId}:`,
+          {
+            agentes: agentes?.length ?? 0,
+            controladores: controladores?.length ?? 0
+          }
+        );
+      },
+
+      error: (err) => {
+
+        console.error(
+          'Error cargando personal de la plaza:',
+          err
+        );
+
+        this.agentes.set([]);
+        this.controladores.set([]);
+
+        this.loadingPersonal.set(false);
+
+        this.error.set(
+          `No se pudo cargar el personal de la plaza. ${this.errorMessage(err)}`
+        );
+      }
     });
   }
 
+  /*
+   * Este método lo conservamos porque probablemente
+   * ya lo utiliza tu HTML.
+   *
+   * Ya no necesita filtrar manualmente porque
+   * this.agentes() ya contiene únicamente
+   * trabajadores de la plaza seleccionada.
+   */
   agentesFiltrados(): Trabajador[] {
-
-    const plazaId = Number(
-      this.form.controls.plazaId.value
-    );
-
-    return this.agentes().filter((agente) => {
-      return !plazaId ||
-        agente.plaza?.id === plazaId;
-    });
+    return this.agentes();
   }
 
   onFiles(event: Event): void {
@@ -377,12 +537,6 @@ export class AsistenciaFormComponent implements OnInit {
     });
   }
 
-  /*
-   * Se ejecuta cuando cambia el turno.
-   *
-   * El turno proporciona el número por defecto,
-   * pero luego el usuario puede modificarlo.
-   */
   private syncTurno(): void {
 
     const turno =
@@ -397,12 +551,6 @@ export class AsistenciaFormComponent implements OnInit {
     const total =
       turno?.personalProgramado ?? 0;
 
-    /*
-     * Colocar programados según el turno.
-     *
-     * emitEvent false para evitar disparar
-     * dos veces la actualización.
-     */
     this.form.controls.programados.setValue(
       total,
       {
@@ -425,10 +573,6 @@ export class AsistenciaFormComponent implements OnInit {
     this.syncAusencias();
   }
 
-  /*
-   * Se ejecuta cuando el usuario cambia
-   * manualmente "programados".
-   */
   private syncProgramados(): void {
 
     const programados =
@@ -441,20 +585,6 @@ export class AsistenciaFormComponent implements OnInit {
         this.form.controls.presentes.value ?? 0
       );
 
-    /*
-     * Si el usuario reduce programados
-     * por debajo del número de presentes,
-     * ajustamos presentes automáticamente.
-     *
-     * Ejemplo:
-     *
-     * programados = 7
-     * presentes = 7
-     *
-     * cambia programados a 5
-     *
-     * presentes pasa automáticamente a 5.
-     */
     if (
       programados >= 0 &&
       presentes > programados
@@ -475,10 +605,6 @@ export class AsistenciaFormComponent implements OnInit {
     this.syncAusencias();
   }
 
-  /*
-   * Actualiza dinámicamente el máximo
-   * permitido para presentes.
-   */
   private actualizarValidadorPresentes(): void {
 
     const programados =
@@ -500,11 +626,6 @@ export class AsistenciaFormComponent implements OnInit {
       });
   }
 
-  /*
-   * Calcula:
-   *
-   * ausentes = programados - presentes
-   */
   private syncAusencias(): void {
 
     const programados =
@@ -527,10 +648,6 @@ export class AsistenciaFormComponent implements OnInit {
       expected
     );
 
-    /*
-     * Crear formularios de ausencia
-     * según la cantidad requerida.
-     */
     while (
       this.ausencias.length < expected
     ) {
@@ -553,10 +670,6 @@ export class AsistenciaFormComponent implements OnInit {
       );
     }
 
-    /*
-     * Eliminar formularios sobrantes
-     * si disminuye el número de ausentes.
-     */
     while (
       this.ausencias.length > expected
     ) {
@@ -596,6 +709,11 @@ export class AsistenciaFormComponent implements OnInit {
 
     this.files.set([]);
 
+    /*
+     * Al resetear plazaId también se ejecutará
+     * onPlazaChange(), por lo que se limpiarán
+     * agentes y controladores.
+     */
     this.form.reset({
 
       plazaId: null,
@@ -616,6 +734,9 @@ export class AsistenciaFormComponent implements OnInit {
     this.ausentesEsperados.set(0);
 
     this.ausencias.clear();
+
+    this.agentes.set([]);
+    this.controladores.set([]);
   }
 
   private today(): string {
