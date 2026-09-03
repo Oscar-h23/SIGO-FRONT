@@ -1,97 +1,492 @@
 <div class="page">
+
   <div class="page-header">
     <div>
-      <span class="eyebrow">TRAZABILIDAD</span>
-      <h1>Historial de asistencia</h1>
-      <p>Consulta los registros, ausencias y evidencias asociadas a cada turno.</p>
+      <span class="eyebrow">
+        TRAZABILIDAD
+      </span>
+
+      <h1>
+        Historial de asistencia
+      </h1>
+
+      <p>
+        Consulta los registros, ausencias y
+        evidencias asociadas a cada turno.
+      </p>
     </div>
   </div>
 
+  <!-- ========================= -->
+  <!-- FILTROS                   -->
+  <!-- ========================= -->
+
   <section class="card filters">
+
+    <!-- DESDE -->
     <div class="form-field">
-      <label>Desde</label>
-      <input class="form-control" type="date" [(ngModel)]="inicio">
+      <label>
+        Desde
+      </label>
+
+      <input
+        class="form-control"
+        type="date"
+        [(ngModel)]="inicio"
+      >
     </div>
+
+    <!-- HASTA -->
     <div class="form-field">
-      <label>Hasta</label>
-      <input class="form-control" type="date" [(ngModel)]="fin">
+      <label>
+        Hasta
+      </label>
+
+      <input
+        class="form-control"
+        type="date"
+        [(ngModel)]="fin"
+      >
     </div>
-    <button class="btn btn-primary" type="button" (click)="cargar()">Buscar</button>
-    <button class="btn btn-ghost" type="button" (click)="limpiar()">Limpiar</button>
+
+    <!-- PLAZA -->
+    <div class="form-field">
+
+      <label>
+        Plaza
+      </label>
+
+      <select
+        class="form-control"
+        [(ngModel)]="plazaId"
+        (ngModelChange)="cambiarPlaza()"
+      >
+
+        <option [ngValue]="null">
+          Todas las plazas
+        </option>
+
+        @if (loadingPlazas()) {
+
+          <option disabled>
+            Cargando plazas...
+          </option>
+
+        } @else {
+
+          @for (
+            plaza of plazas();
+            track plaza.id
+          ) {
+
+            <option
+              [ngValue]="plaza.id"
+            >
+              {{ plaza.codigo }}
+
+              @if (plaza.descripcion) {
+                · {{ plaza.descripcion }}
+              }
+            </option>
+
+          }
+
+        }
+
+      </select>
+
+    </div>
+
+    <!-- BUSCAR -->
+    <button
+      class="btn btn-primary"
+      type="button"
+      (click)="cargar()"
+      [disabled]="loading()"
+    >
+      {{ loading() ? 'Buscando...' : 'Buscar' }}
+    </button>
+
+    <!-- HOY -->
+    <button
+      class="btn btn-ghost"
+      type="button"
+      (click)="limpiar()"
+      [disabled]="loading()"
+    >
+      Hoy
+    </button>
+
   </section>
 
-  @if (error()) { <div class="alert alert-error history-alert">{{ error() }}</div> }
+
+  <!-- ========================= -->
+  <!-- ERROR                     -->
+  <!-- ========================= -->
+
+  @if (error()) {
+
+    <div class="alert alert-error history-alert">
+      {{ error() }}
+    </div>
+
+  }
+
+
+  <!-- ========================= -->
+  <!-- TABLA                     -->
+  <!-- ========================= -->
 
   <section class="card table-card">
+
     @if (loading()) {
-      <div class="empty-state">Cargando historial…</div>
-    } @else if (!registros().length) {
+
       <div class="empty-state">
-        <strong>No hay registros para mostrar</strong>
-        <span>Prueba con otro rango de fechas.</span>
+        Cargando historial…
       </div>
+
+    } @else if (!registros().length) {
+
+      <div class="empty-state">
+
+        <strong>
+          No hay registros para mostrar
+        </strong>
+
+        <span>
+          No se encontraron asistencias
+          para los filtros seleccionados.
+        </span>
+
+      </div>
+
     } @else {
+
       <div class="table-wrap">
+
         <table>
+
+          <!-- CABECERA -->
           <thead>
             <tr>
-              <th>Fecha</th><th>Plaza</th><th>Turno</th><th>Controlador</th><th>Personal</th><th>Asistencia</th><th></th>
+              <th>Fecha</th>
+              <th>Plaza</th>
+              <th>Turno</th>
+              <th>Controlador</th>
+              <th>Personal</th>
+              <th>Asistencia</th>
+              <th>Acciones</th>
             </tr>
           </thead>
+
+
+          <!-- CONTENIDO -->
           <tbody>
-            @for (r of registros(); track r.id) {
+
+            @for (
+              r of registros();
+              track r.id
+            ) {
+
+              <!-- ========================= -->
+              <!-- FILA PRINCIPAL            -->
+              <!-- ========================= -->
+
               <tr class="main-row">
-                <td><strong>{{ r.fecha | date:'dd/MM/yyyy':'UTC' }}</strong><small>#{{ r.id }}</small></td>
-                <td><span class="plaza-chip">{{ r.plaza }}</span></td>
-                <td><strong>{{ r.turno }}</strong></td>
-                <td class="controller">{{ r.controlador }}</td>
-                <td>{{ r.presentes }} / {{ r.programados }}<small>{{ r.ausentes }} ausente(s)</small></td>
-                <td><span class="percent" [ngClass]="badgeClass(r.porcentaje)">{{ r.porcentaje.toFixed(1) }}%</span></td>
-                <td><button class="detail-btn" type="button" (click)="toggle(r.id)">{{ expandedId() === r.id ? 'Cerrar' : 'Ver detalle' }}</button></td>
+
+                <!-- FECHA -->
+                <td>
+
+                  <strong>
+                    {{
+                      r.fecha
+                        | date:'dd/MM/yyyy':'UTC'
+                    }}
+                  </strong>
+
+                  <small>
+                    #{{ r.id }}
+                  </small>
+
+                </td>
+
+
+                <!-- PLAZA -->
+                <td>
+
+                  <span class="plaza-chip">
+                    {{ r.plaza }}
+                  </span>
+
+                </td>
+
+
+                <!-- TURNO -->
+                <td>
+
+                  <strong>
+                    {{ r.turno }}
+                  </strong>
+
+                </td>
+
+
+                <!-- CONTROLADOR -->
+                <td class="controller">
+
+                  {{ r.controlador }}
+
+                </td>
+
+
+                <!-- PERSONAL -->
+                <td>
+
+                  {{ r.presentes }}
+                  /
+                  {{ r.programados }}
+
+                  <small>
+                    {{ r.ausentes }}
+                    ausente(s)
+                  </small>
+
+                </td>
+
+
+                <!-- PORCENTAJE -->
+                <td>
+
+                  <span
+                    class="percent"
+                    [ngClass]="
+                      badgeClass(
+                        r.porcentaje
+                      )
+                    "
+                  >
+
+                    {{
+                      r.porcentaje
+                        .toFixed(1)
+                    }}%
+
+                  </span>
+
+                </td>
+
+
+                <!-- ACCIONES -->
+                <td>
+
+                  <div class="action-buttons">
+
+                    <!-- VER DETALLE -->
+                    <button
+                      class="detail-btn"
+                      type="button"
+                      (click)="toggle(r.id)"
+                    >
+
+                      {{
+                        expandedId() === r.id
+                          ? 'Cerrar'
+                          : 'Ver detalle'
+                      }}
+
+                    </button>
+
+
+                    <!-- EDITAR -->
+                    <a
+                      class="edit-btn"
+                      [routerLink]="[
+                        '/historial/editar',
+                        r.id
+                      ]"
+                    >
+                      Editar
+                    </a>
+
+                  </div>
+
+                </td>
+
               </tr>
-              @if (expandedId() === r.id) {
+
+
+              <!-- ========================= -->
+              <!-- DETALLE EXPANDIDO         -->
+              <!-- ========================= -->
+
+              @if (
+                expandedId() === r.id
+              ) {
+
                 <tr class="detail-row">
+
                   <td colspan="7">
+
                     <div class="detail-grid">
-                      <section>
-                        <h3>Ausencias</h3>
-                        @if (r.ausencias.length) {
-                          <div class="absence-items">
-                            @for (a of r.ausencias; track a.id) {
-                              <div class="absence-item">
-                                <div><strong>{{ a.codigoTrabajador }} · {{ a.nombreTrabajador }}</strong><span>{{ a.motivo }}</span></div>
-                                @if (a.observacion) { <p>{{ a.observacion }}</p> }
-                              </div>
-                            }
-                          </div>
-                        } @else { <p class="muted">Sin ausencias registradas.</p> }
-                      </section>
+
+
+                      <!-- ========================= -->
+                      <!-- AUSENCIAS                 -->
+                      <!-- ========================= -->
 
                       <section>
-                        <h3>Evidencias</h3>
-                        @if (r.evidencias.length) {
-                          <div class="evidence-grid">
-                            @for (e of r.evidencias; track e.id) {
-                              <a [href]="e.urlArchivo" target="_blank" rel="noopener">
-                                <img [src]="e.urlArchivo" alt="Evidencia de asistencia">
-                              </a>
+
+                        <h3>
+                          Ausencias
+                        </h3>
+
+                        @if (
+                          r.ausencias.length
+                        ) {
+
+                          <div class="absence-items">
+
+                            @for (
+                              a of r.ausencias;
+                              track a.id
+                            ) {
+
+                              <div class="absence-item">
+
+                                <div>
+
+                                  <strong>
+                                    {{
+                                      a.codigoTrabajador
+                                    }}
+                                    ·
+                                    {{
+                                      a.nombreTrabajador
+                                    }}
+                                  </strong>
+
+                                  <span>
+                                    {{ a.motivo }}
+                                  </span>
+
+                                </div>
+
+
+                                @if (
+                                  a.observacion
+                                ) {
+
+                                  <p>
+                                    {{
+                                      a.observacion
+                                    }}
+                                  </p>
+
+                                }
+
+                              </div>
+
                             }
+
                           </div>
-                        } @else { <p class="muted">Sin evidencias adjuntas.</p> }
+
+                        } @else {
+
+                          <p class="muted">
+                            Sin ausencias registradas.
+                          </p>
+
+                        }
+
                       </section>
+
+
+                      <!-- ========================= -->
+                      <!-- EVIDENCIAS                -->
+                      <!-- ========================= -->
+
+                      <section>
+
+                        <h3>
+                          Evidencias
+                        </h3>
+
+                        @if (
+                          r.evidencias.length
+                        ) {
+
+                          <div class="evidence-grid">
+
+                            @for (
+                              e of r.evidencias;
+                              track e.id
+                            ) {
+
+                              <a
+                                [href]="e.urlArchivo"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+
+                                <img
+                                  [src]="e.urlArchivo"
+                                  alt="Evidencia de asistencia"
+                                >
+
+                              </a>
+
+                            }
+
+                          </div>
+
+                        } @else {
+
+                          <p class="muted">
+                            Sin evidencias adjuntas.
+                          </p>
+
+                        }
+
+                      </section>
+
+
+                      <!-- ========================= -->
+                      <!-- NOTAS                     -->
+                      <!-- ========================= -->
 
                       <section class="notes-section">
-                        <h3>Notas</h3>
-                        <p>{{ r.notas || 'Sin observaciones.' }}</p>
+
+                        <h3>
+                          Notas
+                        </h3>
+
+                        <p>
+                          {{
+                            r.notas ||
+                            'Sin observaciones.'
+                          }}
+                        </p>
+
                       </section>
+
                     </div>
+
                   </td>
+
                 </tr>
+
               }
+
             }
+
           </tbody>
+
         </table>
+
       </div>
+
     }
+
   </section>
+
 </div>

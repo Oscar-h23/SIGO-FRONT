@@ -1,10 +1,13 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { forkJoin, Observable } from 'rxjs';
+
 import { environment } from '../../../environments/environment';
+
 import {
   AsistenciaRequest,
   AsistenciaResponse,
+  AsistenciaUpdateRequest,
   AusenciaMotivo,
   DashboardPunto,
   EvidenciaResponse,
@@ -15,23 +18,32 @@ import {
   Turno
 } from '../models/asistencia.models';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root'
+})
 export class AsistenciaApiService {
 
   private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
+
+  private readonly api =
+    environment.apiUrl;
 
   /*
-   * Catálogos generales.
+   * =========================================================
+   * CATÁLOGOS GENERALES
+   * =========================================================
    *
-   * Ya no cargamos agentes ni controladores aquí porque
-   * ahora se cargarán dinámicamente según la plaza.
+   * Agentes y controladores no se cargan aquí.
+   *
+   * Se cargan dinámicamente según
+   * la plaza seleccionada.
    */
   getCatalogos(): Observable<{
     plazas: Plaza[];
     turnos: Turno[];
     motivos: MotivoAusencia[];
   }> {
+
     return forkJoin({
       plazas: this.getPlazas(),
       turnos: this.getTurnos(),
@@ -39,93 +51,138 @@ export class AsistenciaApiService {
     });
   }
 
+  /*
+   * =========================================================
+   * PLAZAS
+   * =========================================================
+   */
   getPlazas(): Observable<Plaza[]> {
+
     return this.http.get<Plaza[]>(
       `${this.api}/plazas`
     );
   }
 
+  /*
+   * =========================================================
+   * TURNOS
+   * =========================================================
+   */
   getTurnos(): Observable<Turno[]> {
+
     return this.http.get<Turno[]>(
       `${this.api}/turnos`
     );
   }
 
+  /*
+   * =========================================================
+   * MOTIVOS DE AUSENCIA
+   * =========================================================
+   */
   getMotivos(): Observable<MotivoAusencia[]> {
+
     return this.http.get<MotivoAusencia[]>(
       `${this.api}/motivos-ausencia`
     );
   }
 
   /*
-   * Método general existente.
+   * =========================================================
+   * TRABAJADORES
+   * =========================================================
    *
-   * Lo mantenemos porque puede seguir siendo utilizado
-   * en otros módulos.
+   * Método general.
+   *
+   * Se mantiene porque puede ser utilizado
+   * por otros módulos.
    */
   getTrabajadores(
     puesto?: string
   ): Observable<Trabajador[]> {
 
-    let params = new HttpParams();
+    let params =
+      new HttpParams();
 
     if (puesto) {
-      params = params.set(
-        'puesto',
-        puesto
-      );
+
+      params =
+        params.set(
+          'puesto',
+          puesto
+        );
     }
 
     return this.http.get<Trabajador[]>(
       `${this.api}/trabajadores`,
-      { params }
+      {
+        params
+      }
     );
   }
 
   /*
-   * Agentes activos pertenecientes a una plaza.
+   * =========================================================
+   * AGENTES POR PLAZA
+   * =========================================================
    *
-   * Backend:
-   * GET /api/trabajadores/agentes?plazaId=3
+   * GET
+   * /api/trabajadores/agentes?plazaId=3
    */
   getAgentesPorPlaza(
     plazaId: number
   ): Observable<Trabajador[]> {
 
-    const params = new HttpParams()
-      .set(
-        'plazaId',
-        plazaId.toString()
-      );
+    const params =
+      new HttpParams()
+        .set(
+          'plazaId',
+          plazaId.toString()
+        );
 
     return this.http.get<Trabajador[]>(
       `${this.api}/trabajadores/agentes`,
-      { params }
+      {
+        params
+      }
     );
   }
 
   /*
-   * Controladores activos pertenecientes a una plaza.
+   * =========================================================
+   * CONTROLADORES POR PLAZA
+   * =========================================================
    *
-   * Backend:
-   * GET /api/trabajadores/controladores?plazaId=3
+   * GET
+   * /api/trabajadores/controladores?plazaId=3
    */
   getControladoresPorPlaza(
     plazaId: number
   ): Observable<Trabajador[]> {
 
-    const params = new HttpParams()
-      .set(
-        'plazaId',
-        plazaId.toString()
-      );
+    const params =
+      new HttpParams()
+        .set(
+          'plazaId',
+          plazaId.toString()
+        );
 
     return this.http.get<Trabajador[]>(
       `${this.api}/trabajadores/controladores`,
-      { params }
+      {
+        params
+      }
     );
   }
 
+  /*
+   * =========================================================
+   * REGISTRAR ASISTENCIA
+   * =========================================================
+   *
+   * POST
+   * /api/asistencias
+   */
   registrarAsistencia(
     request: AsistenciaRequest
   ): Observable<AsistenciaResponse> {
@@ -136,12 +193,40 @@ export class AsistenciaApiService {
     );
   }
 
+  /*
+   * =========================================================
+   * ACTUALIZAR ASISTENCIA
+   * =========================================================
+   *
+   * PUT
+   * /api/asistencias/{id}
+   */
+  actualizarAsistencia(
+    id: number,
+    request: AsistenciaUpdateRequest
+  ): Observable<AsistenciaResponse> {
+
+    return this.http.put<AsistenciaResponse>(
+      `${this.api}/asistencias/${id}`,
+      request
+    );
+  }
+
+  /*
+   * =========================================================
+   * SUBIR EVIDENCIA
+   * =========================================================
+   *
+   * POST
+   * /api/asistencias/{id}/evidencias
+   */
   subirEvidencia(
     asistenciaId: number,
     file: File
   ): Observable<EvidenciaResponse> {
 
-    const formData = new FormData();
+    const formData =
+      new FormData();
 
     formData.append(
       'file',
@@ -154,33 +239,91 @@ export class AsistenciaApiService {
     );
   }
 
+  /*
+   * =========================================================
+   * ELIMINAR EVIDENCIA
+   * =========================================================
+   *
+   * DELETE
+   * /api/asistencias/{asistenciaId}/evidencias/{evidenciaId}
+   */
+  eliminarEvidencia(
+    asistenciaId: number,
+    evidenciaId: number
+  ): Observable<void> {
+
+    return this.http.delete<void>(
+      `${this.api}/asistencias/${asistenciaId}/evidencias/${evidenciaId}`
+    );
+  }
+
+  /*
+   * =========================================================
+   * LISTAR ASISTENCIAS
+   * =========================================================
+   *
+   * GET /api/asistencias
+   *
+   * GET /api/asistencias
+   * ?inicio=2026-09-01
+   * &fin=2026-09-02
+   * &plazaId=3
+   */
   listarAsistencias(
     inicio?: string,
-    fin?: string
+    fin?: string,
+    plazaId?: number | null
   ): Observable<AsistenciaResponse[]> {
 
-    let params = new HttpParams();
+    let params =
+      new HttpParams();
 
     if (inicio) {
-      params = params.set(
-        'inicio',
-        inicio
-      );
+
+      params =
+        params.set(
+          'inicio',
+          inicio
+        );
     }
 
     if (fin) {
-      params = params.set(
-        'fin',
-        fin
-      );
+
+      params =
+        params.set(
+          'fin',
+          fin
+        );
+    }
+
+    if (
+      plazaId !== null &&
+      plazaId !== undefined
+    ) {
+
+      params =
+        params.set(
+          'plazaId',
+          plazaId.toString()
+        );
     }
 
     return this.http.get<AsistenciaResponse[]>(
       `${this.api}/asistencias`,
-      { params }
+      {
+        params
+      }
     );
   }
 
+  /*
+   * =========================================================
+   * OBTENER ASISTENCIA POR ID
+   * =========================================================
+   *
+   * GET
+   * /api/asistencias/{id}
+   */
   obtenerAsistencia(
     id: number
   ): Observable<AsistenciaResponse> {
@@ -190,75 +333,105 @@ export class AsistenciaApiService {
     );
   }
 
+  /*
+   * =========================================================
+   * DASHBOARD - RESUMEN
+   * =========================================================
+   */
   getResumen(
     inicio?: string,
     fin?: string
   ): Observable<ResumenAsistencia> {
 
-    let params = new HttpParams();
+    let params =
+      new HttpParams();
 
     if (inicio) {
-      params = params.set(
-        'inicio',
-        inicio
-      );
+
+      params =
+        params.set(
+          'inicio',
+          inicio
+        );
     }
 
     if (fin) {
-      params = params.set(
-        'fin',
-        fin
-      );
+
+      params =
+        params.set(
+          'fin',
+          fin
+        );
     }
 
     return this.http.get<ResumenAsistencia>(
       `${this.api}/dashboard/asistencia/resumen`,
-      { params }
+      {
+        params
+      }
     );
   }
 
+  /*
+   * =========================================================
+   * DASHBOARD - ASISTENCIA DIARIA
+   * =========================================================
+   */
   getDiario(
     anio: number,
     mes: number
   ): Observable<DashboardPunto[]> {
 
-    const params = new HttpParams()
-      .set(
-        'anio',
-        anio.toString()
-      )
-      .set(
-        'mes',
-        mes.toString()
-      );
+    const params =
+      new HttpParams()
+        .set(
+          'anio',
+          anio.toString()
+        )
+        .set(
+          'mes',
+          mes.toString()
+        );
 
     return this.http.get<DashboardPunto[]>(
       `${this.api}/dashboard/asistencia/diario`,
-      { params }
+      {
+        params
+      }
     );
   }
 
+  /*
+   * =========================================================
+   * DASHBOARD - AUSENCIAS POR MOTIVO
+   * =========================================================
+   */
   getAusenciasMotivo(
     anio: number,
     mes?: number
   ): Observable<AusenciaMotivo[]> {
 
-    let params = new HttpParams()
-      .set(
-        'anio',
-        anio.toString()
-      );
+    let params =
+      new HttpParams()
+        .set(
+          'anio',
+          anio.toString()
+        );
 
     if (mes !== undefined) {
-      params = params.set(
-        'mes',
-        mes.toString()
-      );
+
+      params =
+        params.set(
+          'mes',
+          mes.toString()
+        );
     }
 
     return this.http.get<AusenciaMotivo[]>(
       `${this.api}/dashboard/asistencia/ausencias-motivo`,
-      { params }
+      {
+        params
+      }
     );
   }
 }

@@ -6,18 +6,47 @@ export const routes: Routes = [
     path: '',
     component: MainLayoutComponent,
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'dashboard'
+      },
+
       {
         path: 'dashboard',
-        loadComponent: () => import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent)
+        loadComponent: () =>
+          import('./features/dashboard/dashboard.component')
+            .then((m) => m.DashboardComponent)
       },
+
       {
         path: 'registrar-asistencia',
-        loadComponent: () => import('./features/asistencia-form/asistencia-form.component').then((m) => m.AsistenciaFormComponent)
+        loadComponent: () =>
+          import('./features/asistencia-form/asistencia-form.component')
+            .then((m) => m.AsistenciaFormComponent)
       },
+
       {
         path: 'historial',
-        loadComponent: () => import('./features/asistencia-history/asistencia-history.component').then((m) => m.AsistenciaHistoryComponent)
+        loadComponent: () =>
+          import('./features/asistencia-history/asistencia-history.component')
+            .then((m) => m.AsistenciaHistoryComponent)
+      },
+
+      /*
+       * =========================
+       * EDITAR ASISTENCIA
+       * =========================
+       *
+       * Ejemplo:
+       *
+       * /historial/editar/15
+       */
+      {
+        path: 'historial/editar/:id',
+        loadComponent: () =>
+          import('./features/asistencia-edit/asistencia-edit.component')
+            .then((m) => m.AsistenciaEditComponent)
       },
 
       // =========================
@@ -30,12 +59,14 @@ export const routes: Routes = [
           import('./features/relevo/relevo-form/relevo-form.component')
             .then((m) => m.RelevoFormComponent)
       },
+
       {
         path: 'historial-relevos',
         loadComponent: () =>
           import('./features/relevo/historial-relevos/historial-relevos.component')
             .then((m) => m.HistorialRelevosComponent)
       },
+
       {
         path: 'relevos/:id',
         loadComponent: () =>
@@ -44,5 +75,9 @@ export const routes: Routes = [
       }
     ]
   },
-  { path: '**', redirectTo: 'dashboard' }
+
+  {
+    path: '**',
+    redirectTo: 'dashboard'
+  }
 ];
