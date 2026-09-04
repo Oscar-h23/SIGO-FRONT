@@ -221,23 +221,39 @@ export class AsistenciaApiService {
    * /api/asistencias/{id}/evidencias
    */
   subirEvidencia(
-    asistenciaId: number,
-    file: File
-  ): Observable<EvidenciaResponse> {
+  asistenciaId: number,
+  file: File,
+  tipo?:
+    | 'CALENTAMIENTO'
+    | 'INICIO_TURNO'
+    | 'TAPONES_AUDITIVOS'
+): Observable<EvidenciaResponse> {
 
-    const formData =
-      new FormData();
+  const formData =
+    new FormData();
+
+  formData.append(
+    'file',
+    file
+  );
+
+  /*
+   * El tipo se envía cuando conocemos
+   * específicamente qué evidencia es.
+   */
+  if (tipo) {
 
     formData.append(
-      'file',
-      file
-    );
-
-    return this.http.post<EvidenciaResponse>(
-      `${this.api}/asistencias/${asistenciaId}/evidencias`,
-      formData
+      'tipo',
+      tipo
     );
   }
+
+  return this.http.post<EvidenciaResponse>(
+    `${this.api}/asistencias/${asistenciaId}/evidencias`,
+    formData
+  );
+}
 
   /*
    * =========================================================

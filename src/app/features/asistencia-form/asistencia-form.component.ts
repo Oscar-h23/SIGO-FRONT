@@ -955,18 +955,22 @@ implements OnInit {
 
             this.api.subirEvidencia(
               created.id,
-              calentamiento
+              calentamiento,
+              'CALENTAMIENTO'
             ),
 
             this.api.subirEvidencia(
               created.id,
-              inicioTurno
+              inicioTurno,
+              'INICIO_TURNO'
             ),
 
             this.api.subirEvidencia(
               created.id,
-              tapones
+              tapones,
+              'TAPONES_AUDITIVOS'
             )
+            
 
           ];
 

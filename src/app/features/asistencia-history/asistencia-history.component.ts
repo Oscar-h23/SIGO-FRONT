@@ -577,40 +577,89 @@ export class AsistenciaHistoryComponent implements OnInit {
       );
 
       const evidencias =
-        registro.evidencias ?? [];
+  registro.evidencias ?? [];
 
-      await this.dibujarEvidencia(
-        pdf,
-        evidencias[0]?.urlArchivo,
-        7,
-        94,
-        92,
-        51,
-        '¡A calentar!',
-        [220, 0, 75]
-      );
 
-      await this.dibujarEvidencia(
-        pdf,
-        evidencias[1]?.urlArchivo,
-        102,
-        94,
-        92,
-        51,
-        'Foto de inicio de turno',
-        yellow
-      );
+/*
+ * =====================================================
+ * IDENTIFICAR EVIDENCIAS POR TIPO
+ * =====================================================
+ *
+ * Ya no dependemos de la posición:
+ *
+ * evidencias[0]
+ * evidencias[1]
+ * evidencias[2]
+ *
+ * Cada fotografía se identifica mediante el tipo
+ * guardado en la base de datos.
+ */
 
-      await this.dibujarEvidencia(
-        pdf,
-        evidencias[2]?.urlArchivo,
-        197,
-        94,
-        93,
-        51,
-        'Insp. tapones auditivos',
-        blue
-      );
+const evidenciaCalentamiento =
+  evidencias.find(
+    evidencia =>
+      evidencia.tipo === 'CALENTAMIENTO'
+  );
+
+const evidenciaInicioTurno =
+  evidencias.find(
+    evidencia =>
+      evidencia.tipo === 'INICIO_TURNO'
+  );
+
+const evidenciaTapones =
+  evidencias.find(
+    evidencia =>
+      evidencia.tipo === 'TAPONES_AUDITIVOS'
+  );
+
+
+/*
+ * ¡A CALENTAR!
+ */
+
+await this.dibujarEvidencia(
+  pdf,
+  evidenciaCalentamiento?.urlArchivo,
+  7,
+  94,
+  92,
+  51,
+  '¡A calentar!',
+  [220, 0, 75]
+);
+
+
+/*
+ * FOTO DE INICIO DE TURNO
+ */
+
+await this.dibujarEvidencia(
+  pdf,
+  evidenciaInicioTurno?.urlArchivo,
+  102,
+  94,
+  92,
+  51,
+  'Foto de inicio de turno',
+  yellow
+);
+
+
+/*
+ * INSPECCIÓN DE TAPONES AUDITIVOS
+ */
+
+await this.dibujarEvidencia(
+  pdf,
+  evidenciaTapones?.urlArchivo,
+  197,
+  94,
+  93,
+  51,
+  'Insp. tapones auditivos',
+  blue
+);
 
       /*
        * =====================================================
