@@ -307,6 +307,22 @@
                     >
                       Editar
                     </a>
+                    <!-- GENERAR PDF -->
+                      <button
+                        class="pdf-btn"
+                        type="button"
+                        (click)="generarPdf(r)"
+                        [disabled]="generandoPdfId() !== null"
+                      >
+                        @if (
+                          generandoPdfId() === r.id
+                        ) {
+                          Generando...
+                        } @else {
+                          Generar PDF
+                        }
+                      </button>
+
 
                   </div>
 

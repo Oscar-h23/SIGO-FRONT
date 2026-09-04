@@ -1,14 +1,29 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  OnInit,
+  inject,
+  signal
+} from '@angular/core';
+
+import {
+  CommonModule
+} from '@angular/common';
+
 import {
   FormArray,
   FormBuilder,
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
-import { forkJoin } from 'rxjs';
 
-import { AsistenciaApiService } from '../../core/services/asistencia-api.service';
+import {
+  forkJoin
+} from 'rxjs';
+
+import {
+  AsistenciaApiService
+} from '../../core/services/asistencia-api.service';
+
 import {
   MotivoAusencia,
   Plaza,
@@ -16,263 +31,403 @@ import {
   Turno
 } from '../../core/models/asistencia.models';
 
+
+/* =========================================================
+ * TIPOS
+ * ========================================================= */
+
 interface AusenciaFormValue {
   trabajadorId: number | null;
   motivoId: number | null;
   observacion: string | null;
 }
 
+type EvidenciaTipo =
+  | 'CALENTAMIENTO'
+  | 'INICIO_TURNO'
+  | 'TAPONES_AUDITIVOS';
+
+
 @Component({
   selector: 'app-asistencia-form',
+
   standalone: true,
+
   imports: [
     CommonModule,
     ReactiveFormsModule
   ],
-  templateUrl: './asistencia-form.component.html',
-  styleUrl: './asistencia-form.component.css'
+
+  templateUrl:
+    './asistencia-form.component.html',
+
+  styleUrl:
+    './asistencia-form.component.css'
 })
-export class AsistenciaFormComponent implements OnInit {
+export class AsistenciaFormComponent
+implements OnInit {
 
-  private readonly fb = inject(FormBuilder);
-  private readonly api = inject(AsistenciaApiService);
+  /* =======================================================
+   * SERVICIOS
+   * ======================================================= */
 
-  readonly loadingCatalogos = signal(true);
+  private readonly fb =
+    inject(FormBuilder);
 
-  /*
-   * Nuevo:
-   * indica cuando estamos consultando los trabajadores
-   * correspondientes a la plaza seleccionada.
-   */
-  readonly loadingPersonal = signal(false);
+  private readonly api =
+    inject(AsistenciaApiService);
 
-  readonly saving = signal(false);
 
-  readonly plazas = signal<Plaza[]>([]);
-  readonly turnos = signal<Turno[]>([]);
-  readonly motivos = signal<MotivoAusencia[]>([]);
+  /* =======================================================
+   * ESTADOS
+   * ======================================================= */
 
-  /*
-   * Ahora estas listas solamente contienen
-   * trabajadores de la plaza seleccionada.
-   */
-  readonly controladores = signal<Trabajador[]>([]);
-  readonly agentes = signal<Trabajador[]>([]);
+  readonly loadingCatalogos =
+    signal(true);
 
-  readonly files = signal<File[]>([]);
+  readonly loadingPersonal =
+    signal(false);
 
-  readonly success = signal('');
-  readonly error = signal('');
+  readonly saving =
+    signal(false);
 
-  readonly ausentesEsperados = signal(0);
+  readonly success =
+    signal('');
 
-  readonly form = this.fb.group({
+  readonly error =
+    signal('');
 
-    plazaId: [
-      null as number | null,
-      Validators.required
-    ],
 
-    turnoId: [
-      null as number | null,
-      Validators.required
-    ],
+  /* =======================================================
+   * CATÁLOGOS
+   * ======================================================= */
 
-    controladorId: [
-      null as number | null,
-      Validators.required
-    ],
+  readonly plazas =
+    signal<Plaza[]>([]);
 
-    fecha: [
-      this.today(),
-      Validators.required
-    ],
+  readonly turnos =
+    signal<Turno[]>([]);
 
-    programados: [
-      0,
-      [
-        Validators.required,
-        Validators.min(1)
-      ]
-    ],
+  readonly motivos =
+    signal<MotivoAusencia[]>([]);
 
-    presentes: [
-      0,
-      [
-        Validators.required,
-        Validators.min(0)
-      ]
-    ],
+  readonly controladores =
+    signal<Trabajador[]>([]);
 
-    notas: [''],
+  readonly agentes =
+    signal<Trabajador[]>([]);
 
-    ausencias: this.fb.array([])
-  });
+
+  /* =======================================================
+   * EVIDENCIAS
+   * ======================================================= */
+
+  readonly evidenciaCalentamiento =
+    signal<File | null>(null);
+
+  readonly evidenciaInicioTurno =
+    signal<File | null>(null);
+
+  readonly evidenciaTapones =
+    signal<File | null>(null);
+
+
+  /* =======================================================
+   * AUSENCIAS
+   * ======================================================= */
+
+  readonly ausentesEsperados =
+    signal(0);
+
+
+  /* =======================================================
+   * FORMULARIO
+   * ======================================================= */
+
+  readonly form =
+    this.fb.group({
+
+      plazaId: [
+        null as number | null,
+        Validators.required
+      ],
+
+      turnoId: [
+        null as number | null,
+        Validators.required
+      ],
+
+      controladorId: [
+        null as number | null,
+        Validators.required
+      ],
+
+      fecha: [
+        this.today(),
+        Validators.required
+      ],
+
+      programados: [
+        0,
+        [
+          Validators.required,
+          Validators.min(1)
+        ]
+      ],
+
+      presentes: [
+        0,
+        [
+          Validators.required,
+          Validators.min(0)
+        ]
+      ],
+
+      notas: [''],
+
+      ausencias:
+        this.fb.array([])
+    });
+
+
+  /* =======================================================
+   * GETTERS
+   * ======================================================= */
 
   get ausencias(): FormArray {
-    return this.form.controls.ausencias;
+
+    return this.form
+      .controls
+      .ausencias;
   }
+
+
+  /* =======================================================
+   * INIT
+   * ======================================================= */
 
   ngOnInit(): void {
 
-    /*
-     * Ahora getCatalogos solamente carga:
-     *
-     * - plazas
-     * - turnos
-     * - motivos
-     *
-     * Los trabajadores se cargarán cuando
-     * el usuario seleccione una plaza.
-     */
-    this.api.getCatalogos().subscribe({
-
-      next: (data) => {
-
-        this.plazas.set(
-          data.plazas ?? []
-        );
-
-        this.turnos.set(
-          data.turnos ?? []
-        );
-
-        this.motivos.set(
-          data.motivos ?? []
-        );
-
-        this.loadingCatalogos.set(false);
-      },
-
-      error: (err) => {
-
-        this.error.set(
-          this.errorMessage(err)
-        );
-
-        this.loadingCatalogos.set(false);
-      }
-    });
+    this.cargarCatalogos();
 
     /*
      * Cuando cambia la plaza:
      *
-     * 1. Limpiar controlador seleccionado.
-     * 2. Limpiar trabajadores ausentes.
-     * 3. Limpiar listas anteriores.
-     * 4. Cargar agentes de la nueva plaza.
-     * 5. Cargar controladores de la nueva plaza.
+     * - limpia controlador
+     * - limpia trabajadores ausentes
+     * - carga personal de la nueva plaza
      */
-    this.form.controls.plazaId
-      .valueChanges
-      .subscribe((plazaId) => {
 
-        this.onPlazaChange(
-          plazaId
-        );
-      });
+    this.form
+      .controls
+      .plazaId
+      .valueChanges
+      .subscribe(
+        plazaId => {
+
+          this.onPlazaChange(
+            plazaId
+          );
+        }
+      );
+
 
     /*
      * Cuando cambia el turno:
-     * cargar automáticamente el personal programado.
+     *
+     * - carga automáticamente
+     *   personal programado
      */
-    this.form.controls.turnoId
-      .valueChanges
-      .subscribe(() => {
 
-        this.syncTurno();
-      });
+    this.form
+      .controls
+      .turnoId
+      .valueChanges
+      .subscribe(
+        () => {
+
+          this.syncTurno();
+        }
+      );
+
 
     /*
-     * Cuando el usuario modifica manualmente
-     * el personal programado:
-     * actualizar límites y ausencias.
+     * Cuando cambia programados:
+     *
+     * - corrige presentes
+     * - recalcula ausencias
      */
-    this.form.controls.programados
-      .valueChanges
-      .subscribe(() => {
 
-        this.syncProgramados();
-      });
+    this.form
+      .controls
+      .programados
+      .valueChanges
+      .subscribe(
+        () => {
+
+          this.syncProgramados();
+        }
+      );
+
 
     /*
-     * Si cambia el número de presentes:
-     * recalcular ausentes.
+     * Cuando cambia presentes:
+     *
+     * - recalcula ausencias
      */
-    this.form.controls.presentes
-      .valueChanges
-      .subscribe(() => {
 
-        this.syncAusencias();
+    this.form
+      .controls
+      .presentes
+      .valueChanges
+      .subscribe(
+        () => {
+
+          this.syncAusencias();
+        }
+      );
+  }
+
+
+  /* =======================================================
+   * CATÁLOGOS
+   * ======================================================= */
+
+  private cargarCatalogos(): void {
+
+    this.loadingCatalogos.set(
+      true
+    );
+
+    this.api
+      .getCatalogos()
+      .subscribe({
+
+        next: data => {
+
+          this.plazas.set(
+            data.plazas ?? []
+          );
+
+          this.turnos.set(
+            data.turnos ?? []
+          );
+
+          this.motivos.set(
+            data.motivos ?? []
+          );
+
+          this.loadingCatalogos.set(
+            false
+          );
+        },
+
+        error: err => {
+
+          this.error.set(
+            this.errorMessage(
+              err
+            )
+          );
+
+          this.loadingCatalogos.set(
+            false
+          );
+        }
       });
   }
 
-  /*
-   * Se ejecuta cuando cambia la plaza.
-   */
+
+  /* =======================================================
+   * CAMBIO DE PLAZA
+   * ======================================================= */
+
   private onPlazaChange(
     plazaId: number | null
   ): void {
 
     /*
-     * Limpiar selección anterior.
+     * Limpiar controlador anterior.
      */
-    this.form.controls.controladorId.setValue(
-      null,
-      {
-        emitEvent: false
-      }
-    );
+
+    this.form
+      .controls
+      .controladorId
+      .setValue(
+        null,
+        {
+          emitEvent: false
+        }
+      );
+
+
+    /*
+     * Limpiar selección de trabajadores
+     * ausentes de plaza anterior.
+     */
 
     this.resetAusenciasTrabajadores();
 
-    /*
-     * Vaciar personal de la plaza anterior.
-     */
-    this.controladores.set([]);
-    this.agentes.set([]);
 
     /*
-     * Si no existe plaza seleccionada,
-     * no hacemos ninguna consulta.
+     * Limpiar listas.
      */
+
+    this.controladores.set(
+      []
+    );
+
+    this.agentes.set(
+      []
+    );
+
+
     if (!plazaId) {
 
-      this.loadingPersonal.set(false);
+      this.loadingPersonal.set(
+        false
+      );
 
       return;
     }
 
-    /*
-     * Consultar únicamente trabajadores
-     * pertenecientes a esta plaza.
-     */
+
     this.cargarPersonalPlaza(
       Number(plazaId)
     );
   }
 
-  /*
-   * Carga agentes y controladores de una plaza
-   * en paralelo.
-   */
+
+  /* =======================================================
+   * PERSONAL POR PLAZA
+   * ======================================================= */
+
   private cargarPersonalPlaza(
     plazaId: number
   ): void {
 
-    this.loadingPersonal.set(true);
+    this.loadingPersonal.set(
+      true
+    );
+
+    this.error.set(
+      ''
+    );
+
 
     forkJoin({
 
       agentes:
-        this.api.getAgentesPorPlaza(
-          plazaId
-        ),
+        this.api
+          .getAgentesPorPlaza(
+            plazaId
+          ),
 
       controladores:
-        this.api.getControladoresPorPlaza(
-          plazaId
-        )
+        this.api
+          .getControladoresPorPlaza(
+            plazaId
+          )
 
     }).subscribe({
 
@@ -289,90 +444,251 @@ export class AsistenciaFormComponent implements OnInit {
           controladores ?? []
         );
 
-        this.loadingPersonal.set(false);
+        this.loadingPersonal.set(
+          false
+        );
 
         console.log(
           `Personal cargado para plaza ${plazaId}:`,
           {
-            agentes: agentes?.length ?? 0,
-            controladores: controladores?.length ?? 0
+            agentes:
+              agentes?.length ?? 0,
+
+            controladores:
+              controladores?.length ?? 0
           }
         );
       },
 
-      error: (err) => {
+      error: err => {
 
         console.error(
           'Error cargando personal de la plaza:',
           err
         );
 
-        this.agentes.set([]);
-        this.controladores.set([]);
+        this.agentes.set(
+          []
+        );
 
-        this.loadingPersonal.set(false);
+        this.controladores.set(
+          []
+        );
+
+        this.loadingPersonal.set(
+          false
+        );
 
         this.error.set(
-          `No se pudo cargar el personal de la plaza. ${this.errorMessage(err)}`
+          `No se pudo cargar el personal de la plaza. ${
+            this.errorMessage(err)
+          }`
         );
       }
     });
   }
 
-  /*
-   * Este método lo conservamos porque probablemente
-   * ya lo utiliza tu HTML.
-   *
-   * Ya no necesita filtrar manualmente porque
-   * this.agentes() ya contiene únicamente
-   * trabajadores de la plaza seleccionada.
-   */
+
+  /* =======================================================
+   * AGENTES
+   * ======================================================= */
+
   agentesFiltrados(): Trabajador[] {
+
     return this.agentes();
   }
 
-  onFiles(event: Event): void {
+
+  /* =======================================================
+   * EVIDENCIAS
+   * ======================================================= */
+
+  onEvidenceFile(
+    tipo: EvidenciaTipo,
+    event: Event
+  ): void {
 
     const input =
       event.target as HTMLInputElement;
 
-    const selected = Array
-      .from(input.files ?? [])
-      .filter((file) =>
-        file.type.startsWith('image/')
+    const file =
+      input.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+
+    /*
+     * Tipos permitidos.
+     */
+
+    const tiposPermitidos = [
+      'image/jpeg',
+      'image/png',
+      'image/webp'
+    ];
+
+
+    if (
+      !tiposPermitidos.includes(
+        file.type
+      )
+    ) {
+
+      this.error.set(
+        'Solo se permiten imágenes JPG, PNG o WEBP.'
       );
 
-    const total = [
-      ...this.files(),
-      ...selected
-    ].slice(0, 5);
+      input.value = '';
 
-    this.files.set(total);
+      return;
+    }
+
+
+    /*
+     * Máximo 10 MB por fotografía.
+     */
+
+    const maxSize =
+      10 *
+      1024 *
+      1024;
+
+
+    if (
+      file.size >
+      maxSize
+    ) {
+
+      this.error.set(
+        'Cada fotografía debe pesar como máximo 10 MB.'
+      );
+
+      input.value = '';
+
+      return;
+    }
+
+
+    this.error.set(
+      ''
+    );
+
+
+    switch (tipo) {
+
+      case 'CALENTAMIENTO':
+
+        this.evidenciaCalentamiento.set(
+          file
+        );
+
+        break;
+
+
+      case 'INICIO_TURNO':
+
+        this.evidenciaInicioTurno.set(
+          file
+        );
+
+        break;
+
+
+      case 'TAPONES_AUDITIVOS':
+
+        this.evidenciaTapones.set(
+          file
+        );
+
+        break;
+    }
+
+
+    /*
+     * Permite volver a seleccionar
+     * el mismo archivo si se elimina.
+     */
 
     input.value = '';
   }
 
-  removeFile(index: number): void {
 
-    this.files.update((items) =>
-      items.filter((_, i) =>
-        i !== index
-      )
+  removeEvidence(
+    tipo: EvidenciaTipo
+  ): void {
+
+    switch (tipo) {
+
+      case 'CALENTAMIENTO':
+
+        this.evidenciaCalentamiento.set(
+          null
+        );
+
+        break;
+
+
+      case 'INICIO_TURNO':
+
+        this.evidenciaInicioTurno.set(
+          null
+        );
+
+        break;
+
+
+      case 'TAPONES_AUDITIVOS':
+
+        this.evidenciaTapones.set(
+          null
+        );
+
+        break;
+    }
+  }
+
+
+  fileUrl(
+    file: File
+  ): string {
+
+    return URL.createObjectURL(
+      file
     );
   }
 
-  fileUrl(file: File): string {
-    return URL.createObjectURL(file);
-  }
+
+  /* =======================================================
+   * SUBMIT
+   * ======================================================= */
 
   submit(): void {
 
-    this.success.set('');
-    this.error.set('');
+    this.success.set(
+      ''
+    );
+
+    this.error.set(
+      ''
+    );
+
+
+    /*
+     * Marcar formulario.
+     */
 
     this.form.markAllAsTouched();
 
-    if (this.form.invalid) {
+
+    /*
+     * Validar campos principales.
+     */
+
+    if (
+      this.form.invalid
+    ) {
 
       this.error.set(
         'Completa los campos obligatorios antes de registrar la asistencia.'
@@ -381,17 +697,34 @@ export class AsistenciaFormComponent implements OnInit {
       return;
     }
 
+
     const programados =
       Number(
-        this.form.controls.programados.value ?? 0
+        this.form
+          .controls
+          .programados
+          .value ?? 0
       );
+
 
     const presentes =
       Number(
-        this.form.controls.presentes.value ?? 0
+        this.form
+          .controls
+          .presentes
+          .value ?? 0
       );
 
-    if (presentes > programados) {
+
+    /*
+     * Presentes no puede superar
+     * programados.
+     */
+
+    if (
+      presentes >
+      programados
+    ) {
 
       this.error.set(
         'El personal presente no puede ser mayor al personal programado.'
@@ -400,11 +733,18 @@ export class AsistenciaFormComponent implements OnInit {
       return;
     }
 
+
+    /*
+     * Validar número exacto de ausencias.
+     */
+
     const expected =
       this.ausentesEsperados();
 
+
     if (
-      this.ausencias.length !== expected
+      this.ausencias.length !==
+      expected
     ) {
 
       this.error.set(
@@ -414,16 +754,47 @@ export class AsistenciaFormComponent implements OnInit {
       return;
     }
 
-    const absentIds =
-      this.ausencias.controls.map(
-        (control) =>
-          Number(
-            control.get('trabajadorId')?.value
-          )
-      );
+
+    /*
+     * Validar que todos los formularios
+     * de ausencia estén completos.
+     */
 
     if (
-      new Set(absentIds).size !==
+      this.ausencias.invalid
+    ) {
+
+      this.error.set(
+        'Completa el trabajador y motivo de todas las ausencias.'
+      );
+
+      return;
+    }
+
+
+    /*
+     * Evitar trabajadores duplicados.
+     */
+
+    const absentIds =
+      this.ausencias
+        .controls
+        .map(
+          control =>
+            Number(
+              control
+                .get(
+                  'trabajadorId'
+                )
+                ?.value
+            )
+        );
+
+
+    if (
+      new Set(
+        absentIds
+      ).size !==
       absentIds.length
     ) {
 
@@ -434,251 +805,466 @@ export class AsistenciaFormComponent implements OnInit {
       return;
     }
 
+
+    /*
+     * =====================================================
+     * VALIDAR LAS 3 EVIDENCIAS
+     * =====================================================
+     */
+
+    const calentamiento =
+      this.evidenciaCalentamiento();
+
+    const inicioTurno =
+      this.evidenciaInicioTurno();
+
+    const tapones =
+      this.evidenciaTapones();
+
+
+    if (
+      !calentamiento ||
+      !inicioTurno ||
+      !tapones
+    ) {
+
+      this.error.set(
+        'Debes registrar las tres evidencias fotográficas: calentamiento, inicio de turno e inspección de tapones auditivos.'
+      );
+
+      return;
+    }
+
+
+    /*
+     * Datos finales del formulario.
+     */
+
     const raw =
-      this.form.getRawValue();
+      this.form
+        .getRawValue();
+
 
     const ausencias =
-      raw.ausencias as AusenciaFormValue[];
+      raw.ausencias as
+        AusenciaFormValue[];
 
-    this.saving.set(true);
 
-    this.api.registrarAsistencia({
+    /*
+     * Empezar guardado.
+     */
 
-      plazaId:
-        Number(raw.plazaId),
+    this.saving.set(
+      true
+    );
 
-      turnoId:
-        Number(raw.turnoId),
 
-      controladorId:
-        Number(raw.controladorId),
+    /*
+     * Primero registrar asistencia.
+     */
 
-      fecha:
-        String(raw.fecha),
+    this.api
+      .registrarAsistencia({
 
-      programados:
-        Number(raw.programados),
+        plazaId:
+          Number(
+            raw.plazaId
+          ),
 
-      presentes:
-        Number(raw.presentes),
+        turnoId:
+          Number(
+            raw.turnoId
+          ),
 
-      notas:
-        raw.notas?.trim() || null,
+        controladorId:
+          Number(
+            raw.controladorId
+          ),
 
-      ausencias:
-        ausencias.map((ausencia) => ({
+        fecha:
+          String(
+            raw.fecha
+          ),
 
-          trabajadorId:
-            Number(
-              ausencia.trabajadorId
-            ),
+        programados:
+          Number(
+            raw.programados
+          ),
 
-          motivoId:
-            Number(
-              ausencia.motivoId
-            ),
+        presentes:
+          Number(
+            raw.presentes
+          ),
 
-          observacion:
-            ausencia.observacion
-              ?.trim() || null
-        })),
+        notas:
+          raw.notas
+            ?.trim() ||
+          null,
 
-      evidencias: []
+        ausencias:
+          ausencias.map(
+            ausencia => ({
 
-    }).subscribe({
+              trabajadorId:
+                Number(
+                  ausencia
+                    .trabajadorId
+                ),
 
-      next: (created) => {
+              motivoId:
+                Number(
+                  ausencia
+                    .motivoId
+                ),
 
-        const uploads =
-          this.files().map((file) =>
+              observacion:
+                ausencia
+                  .observacion
+                  ?.trim() ||
+                null
+            })
+          ),
+
+        /*
+         * Primero creamos asistencia.
+         * Las fotos se suben después.
+         */
+
+        evidencias: []
+
+      })
+      .subscribe({
+
+        next: created => {
+
+          /*
+           * IMPORTANTE:
+           *
+           * Las imágenes se envían siempre
+           * exactamente en este orden:
+           *
+           * 0 = CALENTAMIENTO
+           * 1 = INICIO TURNO
+           * 2 = TAPONES AUDITIVOS
+           *
+           * Esto mantiene el mismo orden que
+           * actualmente usa el PDF.
+           */
+
+          const uploads = [
+
             this.api.subirEvidencia(
               created.id,
-              file
+              calentamiento
+            ),
+
+            this.api.subirEvidencia(
+              created.id,
+              inicioTurno
+            ),
+
+            this.api.subirEvidencia(
+              created.id,
+              tapones
+            )
+
+          ];
+
+
+          forkJoin(
+            uploads
+          )
+          .subscribe({
+
+            next: () => {
+
+              this.finishSuccess(
+                created.id
+              );
+            },
+
+            error: err => {
+
+              this.saving.set(
+                false
+              );
+
+              this.error.set(
+                `La asistencia #${created.id} se registró, pero una de las evidencias no pudo subirse. ${
+                  this.errorMessage(err)
+                }`
+              );
+            }
+          });
+        },
+
+        error: err => {
+
+          this.saving.set(
+            false
+          );
+
+          this.error.set(
+            this.errorMessage(
+              err
             )
           );
-
-        if (!uploads.length) {
-
-          this.finishSuccess(
-            created.id
-          );
-
-          return;
         }
-
-        forkJoin(uploads).subscribe({
-
-          next: () => {
-
-            this.finishSuccess(
-              created.id
-            );
-          },
-
-          error: (err) => {
-
-            this.saving.set(false);
-
-            this.error.set(
-              `La asistencia #${created.id} se registró, pero una evidencia no pudo subirse. ${this.errorMessage(err)}`
-            );
-          }
-        });
-      },
-
-      error: (err) => {
-
-        this.saving.set(false);
-
-        this.error.set(
-          this.errorMessage(err)
-        );
-      }
-    });
+      });
   }
+
+
+  /* =======================================================
+   * SINCRONIZAR TURNO
+   * ======================================================= */
 
   private syncTurno(): void {
 
     const turno =
-      this.turnos().find(
-        (item) =>
-          item.id ===
-          Number(
-            this.form.controls.turnoId.value
-          )
-      );
+      this.turnos()
+        .find(
+          item =>
+            item.id ===
+            Number(
+              this.form
+                .controls
+                .turnoId
+                .value
+            )
+        );
+
 
     const total =
-      turno?.personalProgramado ?? 0;
+      turno
+        ?.personalProgramado ??
+      0;
 
-    this.form.controls.programados.setValue(
-      total,
-      {
-        emitEvent: false
-      }
-    );
 
     /*
-     * Por defecto todos están presentes.
+     * Personal programado
+     * según turno.
      */
-    this.form.controls.presentes.setValue(
-      total,
-      {
-        emitEvent: false
-      }
-    );
+
+    this.form
+      .controls
+      .programados
+      .setValue(
+        total,
+        {
+          emitEvent: false
+        }
+      );
+
+
+    /*
+     * Por defecto:
+     * todos presentes.
+     */
+
+    this.form
+      .controls
+      .presentes
+      .setValue(
+        total,
+        {
+          emitEvent: false
+        }
+      );
+
 
     this.actualizarValidadorPresentes();
 
     this.syncAusencias();
   }
+
+
+  /* =======================================================
+   * SINCRONIZAR PROGRAMADOS
+   * ======================================================= */
 
   private syncProgramados(): void {
 
     const programados =
       Number(
-        this.form.controls.programados.value ?? 0
+        this.form
+          .controls
+          .programados
+          .value ?? 0
       );
+
 
     let presentes =
       Number(
-        this.form.controls.presentes.value ?? 0
+        this.form
+          .controls
+          .presentes
+          .value ?? 0
       );
+
+
+    /*
+     * Si presentes supera programados,
+     * corregir automáticamente.
+     */
 
     if (
       programados >= 0 &&
-      presentes > programados
+      presentes >
+      programados
     ) {
 
-      presentes = programados;
+      presentes =
+        programados;
 
-      this.form.controls.presentes.setValue(
-        presentes,
-        {
-          emitEvent: false
-        }
-      );
+
+      this.form
+        .controls
+        .presentes
+        .setValue(
+          presentes,
+          {
+            emitEvent: false
+          }
+        );
     }
+
 
     this.actualizarValidadorPresentes();
 
     this.syncAusencias();
   }
 
+
+  /* =======================================================
+   * VALIDADOR PRESENTES
+   * ======================================================= */
+
   private actualizarValidadorPresentes(): void {
 
     const programados =
       Number(
-        this.form.controls.programados.value ?? 0
+        this.form
+          .controls
+          .programados
+          .value ?? 0
       );
 
-    this.form.controls.presentes.setValidators([
-      Validators.required,
-      Validators.min(0),
-      Validators.max(
-        Math.max(0, programados)
-      )
-    ]);
 
-    this.form.controls.presentes
+    this.form
+      .controls
+      .presentes
+      .setValidators([
+        Validators.required,
+        Validators.min(0),
+        Validators.max(
+          Math.max(
+            0,
+            programados
+          )
+        )
+      ]);
+
+
+    this.form
+      .controls
+      .presentes
       .updateValueAndValidity({
         emitEvent: false
       });
   }
 
+
+  /* =======================================================
+   * SINCRONIZAR AUSENCIAS
+   * ======================================================= */
+
   private syncAusencias(): void {
 
     const programados =
       Number(
-        this.form.controls.programados.value ?? 0
+        this.form
+          .controls
+          .programados
+          .value ?? 0
       );
+
 
     const presentes =
       Number(
-        this.form.controls.presentes.value ?? 0
+        this.form
+          .controls
+          .presentes
+          .value ?? 0
       );
+
 
     const expected =
       Math.max(
         0,
-        programados - presentes
+        programados -
+        presentes
       );
+
 
     this.ausentesEsperados.set(
       expected
     );
 
+
+    /*
+     * Crear formularios
+     * faltantes.
+     */
+
     while (
-      this.ausencias.length < expected
+      this.ausencias.length <
+      expected
     ) {
 
       this.ausencias.push(
+
         this.fb.group({
 
           trabajadorId: [
-            null as number | null,
+            null as
+              number | null,
             Validators.required
           ],
 
           motivoId: [
-            null as number | null,
+            null as
+              number | null,
             Validators.required
           ],
 
           observacion: ['']
+
         })
       );
     }
 
+
+    /*
+     * Eliminar formularios
+     * sobrantes.
+     */
+
     while (
-      this.ausencias.length > expected
+      this.ausencias.length >
+      expected
     ) {
 
       this.ausencias.removeAt(
-        this.ausencias.length - 1
+        this.ausencias.length -
+        1
       );
     }
   }
+
+
+  /* =======================================================
+   * RESET TRABAJADORES AUSENTES
+   * ======================================================= */
 
   private resetAusenciasTrabajadores(): void {
 
@@ -688,72 +1274,137 @@ export class AsistenciaFormComponent implements OnInit {
     ) {
 
       group
-        .get('trabajadorId')
-        ?.setValue(null);
+        .get(
+          'trabajadorId'
+        )
+        ?.setValue(
+          null
+        );
     }
   }
+
+
+  /* =======================================================
+   * FINALIZAR REGISTRO
+   * ======================================================= */
 
   private finishSuccess(
     id: number
   ): void {
 
-    this.saving.set(false);
-
-    this.success.set(
-      `Asistencia #${id} registrada correctamente${
-        this.files().length
-          ? ' con sus evidencias'
-          : ''
-      }.`
+    this.saving.set(
+      false
     );
 
-    this.files.set([]);
+
+    this.success.set(
+      `Asistencia #${id} registrada correctamente con sus tres evidencias.`
+    );
+
 
     /*
-     * Al resetear plazaId también se ejecutará
-     * onPlazaChange(), por lo que se limpiarán
-     * agentes y controladores.
+     * Limpiar evidencias.
      */
+
+    this.evidenciaCalentamiento.set(
+      null
+    );
+
+    this.evidenciaInicioTurno.set(
+      null
+    );
+
+    this.evidenciaTapones.set(
+      null
+    );
+
+
+    /*
+     * Resetear formulario.
+     */
+
     this.form.reset({
 
-      plazaId: null,
+      plazaId:
+        null,
 
-      turnoId: null,
+      turnoId:
+        null,
 
-      controladorId: null,
+      controladorId:
+        null,
 
-      fecha: this.today(),
+      fecha:
+        this.today(),
 
-      programados: 0,
+      programados:
+        0,
 
-      presentes: 0,
+      presentes:
+        0,
 
-      notas: ''
+      notas:
+        ''
+
     });
 
-    this.ausentesEsperados.set(0);
+
+    /*
+     * Limpiar ausencias.
+     */
+
+    this.ausentesEsperados.set(
+      0
+    );
 
     this.ausencias.clear();
 
-    this.agentes.set([]);
-    this.controladores.set([]);
+
+    /*
+     * Limpiar personal.
+     */
+
+    this.agentes.set(
+      []
+    );
+
+    this.controladores.set(
+      []
+    );
   }
+
+
+  /* =======================================================
+   * FECHA ACTUAL
+   * ======================================================= */
 
   private today(): string {
 
     const date =
       new Date();
 
+
     const offset =
-      date.getTimezoneOffset();
+      date
+        .getTimezoneOffset();
+
 
     return new Date(
       date.getTime() -
-      offset * 60000
+      offset *
+      60000
     )
       .toISOString()
-      .slice(0, 10);
+      .slice(
+        0,
+        10
+      );
   }
+
+
+  /* =======================================================
+   * MENSAJES DE ERROR
+   * ======================================================= */
 
   private errorMessage(
     err: unknown
@@ -761,26 +1412,39 @@ export class AsistenciaFormComponent implements OnInit {
 
     const error =
       err as {
+
         error?:
           | {
               message?: string;
               error?: string;
             }
           | string;
+
         message?: string;
       };
 
+
     if (
-      typeof error?.error === 'string'
+      typeof error?.error ===
+      'string'
     ) {
 
       return error.error;
     }
 
+
     return (
-      error?.error?.message ??
-      error?.error?.error ??
-      error?.message ??
+      error
+        ?.error
+        ?.message
+      ??
+      error
+        ?.error
+        ?.error
+      ??
+      error
+        ?.message
+      ??
       'Ocurrió un error inesperado.'
     );
   }

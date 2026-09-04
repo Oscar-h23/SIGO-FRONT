@@ -55,3 +55,66 @@
   }
 
 }
+
+/* =========================================================
+   BOTÓN PDF
+   ========================================================= */
+
+.pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 36px;
+  padding: 0 14px;
+
+  border: 1px solid var(--blue-600);
+  border-radius: 8px;
+
+  background: var(--blue-600);
+  color: #fff;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.pdf-btn:hover:not(:disabled) {
+  background: var(--navy-900);
+  border-color: var(--navy-900);
+
+  transform: translateY(-1px);
+}
+
+.pdf-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.pdf-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   ACCIONES EN MÓVIL
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+  .action-buttons .detail-btn,
+  .action-buttons .edit-btn,
+  .action-buttons .pdf-btn {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+}

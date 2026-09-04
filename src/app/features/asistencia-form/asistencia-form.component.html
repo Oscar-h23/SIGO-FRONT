@@ -1,7 +1,13 @@
 <div class="page">
 
+  <!-- ============================================ -->
+  <!-- CABECERA -->
+  <!-- ============================================ -->
+
   <div class="page-header">
+
     <div>
+
       <span class="eyebrow">
         CONTROL DE TURNO
       </span>
@@ -14,30 +20,37 @@
         Completa el control del turno.
         El personal se filtrará automáticamente según la plaza seleccionada.
       </p>
+
     </div>
+
   </div>
 
 
-  <!-- ============================= -->
+  <!-- ============================================ -->
   <!-- MENSAJES -->
-  <!-- ============================= -->
+  <!-- ============================================ -->
 
   @if (error()) {
+
     <div class="alert alert-error message">
       {{ error() }}
     </div>
+
   }
 
+
   @if (success()) {
+
     <div class="alert alert-success message">
       {{ success() }}
     </div>
+
   }
 
 
-  <!-- ============================= -->
+  <!-- ============================================ -->
   <!-- CARGANDO CATÁLOGOS -->
-  <!-- ============================= -->
+  <!-- ============================================ -->
 
   @if (loadingCatalogos()) {
 
@@ -58,9 +71,9 @@
     >
 
 
-      <!-- ============================= -->
+      <!-- ============================================ -->
       <!-- 1. DATOS DEL TURNO -->
-      <!-- ============================= -->
+      <!-- ============================================ -->
 
       <section class="card form-card">
 
@@ -71,6 +84,7 @@
           </div>
 
           <div>
+
             <h2>
               Datos del turno
             </h2>
@@ -79,17 +93,24 @@
               Selecciona la plaza para cargar automáticamente
               el personal correspondiente.
             </p>
+
           </div>
 
         </div>
 
 
-        <div class="form-grid">
+        <!--
+          IMPORTANTE:
+          turn-data-grid permite colocar los
+          cuatro campos en una sola fila.
+        -->
+
+        <div class="form-grid turn-data-grid">
 
 
-          <!-- ============================= -->
+          <!-- ============================================ -->
           <!-- PLAZA -->
-          <!-- ============================= -->
+          <!-- ============================================ -->
 
           <div class="form-field">
 
@@ -128,9 +149,9 @@
           </div>
 
 
-          <!-- ============================= -->
+          <!-- ============================================ -->
           <!-- TURNO -->
-          <!-- ============================= -->
+          <!-- ============================================ -->
 
           <div class="form-field">
 
@@ -168,9 +189,9 @@
           </div>
 
 
-          <!-- ============================= -->
+          <!-- ============================================ -->
           <!-- CONTROLADOR -->
-          <!-- ============================= -->
+          <!-- ============================================ -->
 
           <div class="form-field">
 
@@ -241,7 +262,6 @@
               <span class="helper">
 
                 {{ controladores().length }}
-
                 controlador(es) disponible(s)
                 en esta plaza.
 
@@ -252,9 +272,9 @@
           </div>
 
 
-          <!-- ============================= -->
+          <!-- ============================================ -->
           <!-- FECHA -->
-          <!-- ============================= -->
+          <!-- ============================================ -->
 
           <div class="form-field">
 
@@ -273,9 +293,9 @@
         </div>
 
 
-        <!-- ============================= -->
+        <!-- ============================================ -->
         <!-- RESUMEN PERSONAL DE PLAZA -->
-        <!-- ============================= -->
+        <!-- ============================================ -->
 
         @if (
           form.controls.plazaId.value &&
@@ -315,9 +335,9 @@
       </section>
 
 
-      <!-- ============================= -->
+      <!-- ============================================ -->
       <!-- 2. CONTEO DE PERSONAL -->
-      <!-- ============================= -->
+      <!-- ============================================ -->
 
       <section class="card form-card">
 
@@ -343,7 +363,9 @@
         </div>
 
 
+        <!-- ============================================ -->
         <!-- RESUMEN -->
+        <!-- ============================================ -->
 
         <div class="attendance-summary">
 
@@ -414,12 +436,16 @@
         </div>
 
 
+        <!-- ============================================ -->
         <!-- CAMPOS -->
+        <!-- ============================================ -->
 
         <div class="form-grid">
 
 
+          <!-- ============================================ -->
           <!-- PROGRAMADOS -->
+          <!-- ============================================ -->
 
           <div class="form-field presentes-field">
 
@@ -453,7 +479,9 @@
           </div>
 
 
+          <!-- ============================================ -->
           <!-- PRESENTES -->
+          <!-- ============================================ -->
 
           <div class="form-field presentes-field">
 
@@ -497,9 +525,9 @@
       </section>
 
 
-      <!-- ============================= -->
+      <!-- ============================================ -->
       <!-- 3. AUSENCIAS -->
-      <!-- ============================= -->
+      <!-- ============================================ -->
 
       @if (ausentesEsperados() > 0) {
 
@@ -530,7 +558,9 @@
           </div>
 
 
+          <!-- ============================================ -->
           <!-- SIN PLAZA -->
+          <!-- ============================================ -->
 
           @if (!form.controls.plazaId.value) {
 
@@ -544,7 +574,9 @@
           }
 
 
+          <!-- ============================================ -->
           <!-- CARGANDO PERSONAL -->
+          <!-- ============================================ -->
 
           @if (loadingPersonal()) {
 
@@ -559,7 +591,9 @@
           }
 
 
+          <!-- ============================================ -->
           <!-- NO HAY AGENTES -->
+          <!-- ============================================ -->
 
           @if (
             form.controls.plazaId.value &&
@@ -576,6 +610,10 @@
 
           }
 
+
+          <!-- ============================================ -->
+          <!-- LISTADO AUSENCIAS -->
+          <!-- ============================================ -->
 
           <div
             formArrayName="ausencias"
@@ -597,7 +635,9 @@
                 </div>
 
 
+                <!-- ============================================ -->
                 <!-- TRABAJADOR -->
+                <!-- ============================================ -->
 
                 <div class="form-field">
 
@@ -656,7 +696,9 @@
                 </div>
 
 
+                <!-- ============================================ -->
                 <!-- MOTIVO -->
+                <!-- ============================================ -->
 
                 <div class="form-field">
 
@@ -689,7 +731,9 @@
                 </div>
 
 
+                <!-- ============================================ -->
                 <!-- OBSERVACIÓN -->
+                <!-- ============================================ -->
 
                 <div class="form-field observation">
 
@@ -716,9 +760,9 @@
       }
 
 
-      <!-- ============================= -->
+      <!-- ============================================ -->
       <!-- EVIDENCIAS -->
-      <!-- ============================= -->
+      <!-- ============================================ -->
 
       <section class="card form-card">
 
@@ -731,11 +775,11 @@
           <div>
 
             <h2>
-              Evidencias y notas
+              Evidencias fotográficas
             </h2>
 
             <p>
-              Puedes adjuntar hasta 5 imágenes.
+              Registra las tres fotografías correspondientes al turno.
             </p>
 
           </div>
@@ -743,9 +787,313 @@
         </div>
 
 
-        <!-- NOTAS -->
+        <!-- ============================================ -->
+        <!-- CONTENEDOR DE LAS 3 EVIDENCIAS -->
+        <!-- ============================================ -->
 
-        <div class="form-field">
+        <div class="evidence-upload-grid">
+
+
+          <!-- ============================================ -->
+          <!-- EVIDENCIA 1: CALENTAMIENTO -->
+          <!-- ============================================ -->
+
+          <div class="evidence-upload-card">
+
+            <div class="evidence-title evidence-title-calentamiento">
+
+              <span class="evidence-number">
+                1
+              </span>
+
+              <div>
+
+                <strong>
+                  ¡A calentar!
+                </strong>
+
+                <small>
+                  Fotografía del calentamiento previo al inicio del turno.
+                </small>
+
+              </div>
+
+            </div>
+
+
+            @if (!evidenciaCalentamiento()) {
+
+              <label class="evidence-dropzone">
+
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  (change)="
+                    onEvidenceFile(
+                      'CALENTAMIENTO',
+                      $event
+                    )
+                  "
+                  hidden
+                >
+
+                <span class="upload-icon">
+                  ↑
+                </span>
+
+                <strong>
+                  Seleccionar fotografía
+                </strong>
+
+                <small>
+                  JPG, PNG o WEBP
+                </small>
+
+              </label>
+
+            } @else {
+
+              <div class="evidence-preview">
+
+                <img
+                  [src]="fileUrl(evidenciaCalentamiento()!)"
+                  alt="Evidencia de calentamiento"
+                >
+
+                <div class="evidence-preview-info">
+
+                  <span>
+                    {{ evidenciaCalentamiento()!.name }}
+                  </span>
+
+                  <button
+                    type="button"
+                    class="remove-evidence-btn"
+                    (click)="removeEvidence('CALENTAMIENTO')"
+                  >
+                    Eliminar
+                  </button>
+
+                </div>
+
+              </div>
+
+            }
+
+          </div>
+
+
+          <!-- ============================================ -->
+          <!-- EVIDENCIA 2: INICIO DE TURNO -->
+          <!-- ============================================ -->
+
+          <div class="evidence-upload-card">
+
+            <div class="evidence-title evidence-title-inicio">
+
+              <span class="evidence-number">
+                2
+              </span>
+
+              <div>
+
+                <strong>
+                  Foto de inicio de turno
+                </strong>
+
+                <small>
+                  Fotografía general del personal al comenzar el turno.
+                </small>
+
+              </div>
+
+            </div>
+
+
+            @if (!evidenciaInicioTurno()) {
+
+              <label class="evidence-dropzone">
+
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  (change)="
+                    onEvidenceFile(
+                      'INICIO_TURNO',
+                      $event
+                    )
+                  "
+                  hidden
+                >
+
+                <span class="upload-icon">
+                  ↑
+                </span>
+
+                <strong>
+                  Seleccionar fotografía
+                </strong>
+
+                <small>
+                  JPG, PNG o WEBP
+                </small>
+
+              </label>
+
+            } @else {
+
+              <div class="evidence-preview">
+
+                <img
+                  [src]="fileUrl(evidenciaInicioTurno()!)"
+                  alt="Foto de inicio de turno"
+                >
+
+                <div class="evidence-preview-info">
+
+                  <span>
+                    {{ evidenciaInicioTurno()!.name }}
+                  </span>
+
+                  <button
+                    type="button"
+                    class="remove-evidence-btn"
+                    (click)="removeEvidence('INICIO_TURNO')"
+                  >
+                    Eliminar
+                  </button>
+
+                </div>
+
+              </div>
+
+            }
+
+          </div>
+
+
+          <!-- ============================================ -->
+          <!-- EVIDENCIA 3: TAPONES AUDITIVOS -->
+          <!-- ============================================ -->
+
+          <div class="evidence-upload-card">
+
+            <div class="evidence-title evidence-title-tapones">
+
+              <span class="evidence-number">
+                3
+              </span>
+
+              <div>
+
+                <strong>
+                  Inspección de tapones auditivos
+                </strong>
+
+                <small>
+                  Fotografía de la inspección del uso de protección auditiva.
+                </small>
+
+              </div>
+
+            </div>
+
+
+            @if (!evidenciaTapones()) {
+
+              <label class="evidence-dropzone">
+
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  (change)="
+                    onEvidenceFile(
+                      'TAPONES_AUDITIVOS',
+                      $event
+                    )
+                  "
+                  hidden
+                >
+
+                <span class="upload-icon">
+                  ↑
+                </span>
+
+                <strong>
+                  Seleccionar fotografía
+                </strong>
+
+                <small>
+                  JPG, PNG o WEBP
+                </small>
+
+              </label>
+
+            } @else {
+
+              <div class="evidence-preview">
+
+                <img
+                  [src]="fileUrl(evidenciaTapones()!)"
+                  alt="Inspección de tapones auditivos"
+                >
+
+                <div class="evidence-preview-info">
+
+                  <span>
+                    {{ evidenciaTapones()!.name }}
+                  </span>
+
+                  <button
+                    type="button"
+                    class="remove-evidence-btn"
+                    (click)="removeEvidence('TAPONES_AUDITIVOS')"
+                  >
+                    Eliminar
+                  </button>
+
+                </div>
+
+              </div>
+
+            }
+
+          </div>
+
+        </div>
+
+
+        <!-- ============================================ -->
+        <!-- ESTADO DE EVIDENCIAS -->
+        <!-- ============================================ -->
+
+        <div class="evidence-status">
+
+          <span>
+
+            Evidencias registradas:
+
+            <strong>
+              {{
+                (evidenciaCalentamiento() ? 1 : 0)
+                +
+                (evidenciaInicioTurno() ? 1 : 0)
+                +
+                (evidenciaTapones() ? 1 : 0)
+              }}
+              / 3
+            </strong>
+
+          </span>
+
+        </div>
+
+
+        <!-- ============================================ -->
+        <!-- NOTAS -->
+        <!-- ============================================ -->
+
+        <div class="form-field notes-field">
 
           <label>
             Notas del turno
@@ -760,76 +1108,12 @@
 
         </div>
 
-
-        <!-- ARCHIVOS -->
-
-        <label class="dropzone">
-
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            (change)="onFiles($event)"
-            hidden
-          >
-
-          <span class="upload-icon">
-            ↑
-          </span>
-
-          <strong>
-            Seleccionar evidencias
-          </strong>
-
-          <small>
-            JPG, PNG o WEBP · máximo 5 imágenes
-          </small>
-
-        </label>
-
-
-        @if (files().length) {
-
-          <div class="preview-grid">
-
-            @for (
-              file of files();
-              track file.name + $index
-            ) {
-
-              <div class="preview">
-
-                <img
-                  [src]="fileUrl(file)"
-                  [alt]="file.name"
-                >
-
-                <button
-                  type="button"
-                  (click)="removeFile($index)"
-                  aria-label="Eliminar"
-                >
-                  ×
-                </button>
-
-                <span>
-                  {{ file.name }}
-                </span>
-
-              </div>
-
-            }
-
-          </div>
-
-        }
-
       </section>
 
 
-      <!-- ============================= -->
+      <!-- ============================================ -->
       <!-- BOTÓN -->
-      <!-- ============================= -->
+      <!-- ============================================ -->
 
       <div class="actions">
 
@@ -848,11 +1132,13 @@
           @if (saving()) {
 
             <span class="spinner"></span>
+
             Registrando…
 
           } @else if (loadingPersonal()) {
 
             <span class="spinner"></span>
+
             Cargando personal…
 
           } @else {
