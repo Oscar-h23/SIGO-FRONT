@@ -457,7 +457,7 @@ export class AsistenciaHistoryComponent implements OnInit {
        * =====================================================
        */
 
-      const summaryY = 49;
+      const summaryY = 46;
 
       this.dibujarIndicador(
         pdf,
@@ -540,42 +540,6 @@ export class AsistenciaHistoryComponent implements OnInit {
        * =====================================================
        */
 
-      const evidenceHeaderY = 84;
-
-      pdf.setFillColor(
-        ...navy
-      );
-
-      pdf.roundedRect(
-        7,
-        evidenceHeaderY,
-        283,
-        8,
-        2,
-        2,
-        'F'
-      );
-
-      pdf.setTextColor(
-        ...white
-      );
-
-      pdf.setFont(
-        'helvetica',
-        'bold'
-      );
-
-      pdf.setFontSize(11);
-
-      pdf.text(
-        'Registro de evidencias fotográficas',
-        148.5,
-        evidenceHeaderY + 5.5,
-        {
-          align: 'center'
-        }
-      );
-
       const evidencias =
   registro.evidencias ?? [];
 
@@ -622,9 +586,9 @@ await this.dibujarEvidencia(
   pdf,
   evidenciaCalentamiento?.urlArchivo,
   7,
-  94,
+  79,
   92,
-  51,
+  70,
   '¡A calentar!',
   [220, 0, 75]
 );
@@ -638,9 +602,9 @@ await this.dibujarEvidencia(
   pdf,
   evidenciaInicioTurno?.urlArchivo,
   102,
-  94,
+  79,
   92,
-  51,
+  70,
   'Foto de inicio de turno',
   yellow
 );
@@ -654,9 +618,9 @@ await this.dibujarEvidencia(
   pdf,
   evidenciaTapones?.urlArchivo,
   197,
-  94,
+  79,
   93,
-  51,
+  70,
   'Insp. tapones auditivos',
   blue
 );
@@ -667,7 +631,7 @@ await this.dibujarEvidencia(
        * =====================================================
        */
 
-      const notesY = 149;
+      const notesY = 152;
 
       pdf.setFillColor(
         ...white
@@ -929,7 +893,7 @@ await this.dibujarEvidencia(
        */
 
       const x = 4;
-      const y = 170;
+      const y = 171;
       const ancho = 289;
 
       /*
@@ -2760,10 +2724,10 @@ await this.dibujarEvidencia(
         );
 
       const maxWidth =
-        ancho - 5;
+        ancho - 1;
 
       const maxHeight =
-        alto - 12;
+        alto - 8.2;
 
       const escala =
         Math.min(
@@ -2791,7 +2755,7 @@ await this.dibujarEvidencia(
 
       const imageY =
         y +
-        10 +
+        8.2 +
         (
           maxHeight -
           height

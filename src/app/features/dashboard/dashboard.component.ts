@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -24,7 +25,7 @@ interface TurnoResumen {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
@@ -58,7 +59,7 @@ export class DashboardComponent implements OnInit {
     { id: 12, nombre: 'Diciembre', corto: 'Dic' }
   ];
 
-  readonly anios = Array.from({ length: 7 }, (_, i) => this.ahora.getFullYear() + 1 - i);
+  readonly anios = Array.from({ length: 7 }, (_, i) => this.ahora.getFullYear() - i);
   readonly yTicks = [100, 75, 50, 25, 0];
 
   readonly nombreMes = computed(() => this.meses.find((m) => m.id === this.mes())?.nombre ?? 'Mes');
@@ -120,17 +121,39 @@ export class DashboardComponent implements OnInit {
   })));
 
   ngOnInit(): void {
-    this.cargarInicial();
-  }
+  const hoy = new Date();
 
-  onAnioChange(event: Event): void {
-    this.anio.set(Number((event.target as HTMLSelectElement).value));
-    this.cargarRegistros();
-  }
+  this.anio.set(
+    hoy.getFullYear()
+  );
 
-  onMesChange(event: Event): void {
-    this.mes.set(Number((event.target as HTMLSelectElement).value));
-  }
+  this.mes.set(
+    hoy.getMonth() + 1
+  );
+
+  this.cargarInicial();
+}
+
+onAnioModelChange(
+  value: number
+): void {
+
+  this.anio.set(
+    Number(value)
+  );
+
+  this.cargarRegistros();
+}
+
+onMesModelChange(
+  value: number
+): void {
+
+  this.mes.set(
+    Number(value)
+  );
+}
+
 
   onPlazaChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
