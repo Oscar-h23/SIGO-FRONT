@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -25,7 +25,7 @@ interface TurnoResumen {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
@@ -39,10 +39,20 @@ export class DashboardComponent implements OnInit {
   readonly registrosAnio = signal<AsistenciaResponse[]>([]);
 
   private readonly ahora = new Date();
-  readonly anio = signal(this.ahora.getFullYear());
-  readonly mes = signal(this.ahora.getMonth() + 1);
-  readonly plazaId = signal<number | null>(null);
-  readonly turnoId = signal<number | null>(null);
+
+readonly anio = signal(
+  this.ahora.getFullYear()
+);
+
+readonly mes = signal(
+  this.ahora.getMonth() + 1
+);
+
+readonly plazaId =
+  signal<number | null>(null);
+
+readonly turnoId =
+  signal<number | null>(null);
 
   readonly meses = [
     { id: 1, nombre: 'Enero', corto: 'Ene' },
@@ -121,37 +131,37 @@ export class DashboardComponent implements OnInit {
   })));
 
   ngOnInit(): void {
-  const hoy = new Date();
-
-  this.anio.set(
-    hoy.getFullYear()
-  );
-
-  this.mes.set(
-    hoy.getMonth() + 1
-  );
-
   this.cargarInicial();
 }
 
-onAnioModelChange(
-  value: number
+onAnioChange(
+  event: Event
 ): void {
 
-  this.anio.set(
-    Number(value)
-  );
+  const value =
+    Number(
+      (
+        event.target as HTMLSelectElement
+      ).value
+    );
+
+  this.anio.set(value);
 
   this.cargarRegistros();
 }
 
-onMesModelChange(
-  value: number
+onMesChange(
+  event: Event
 ): void {
 
-  this.mes.set(
-    Number(value)
-  );
+  const value =
+    Number(
+      (
+        event.target as HTMLSelectElement
+      ).value
+    );
+
+  this.mes.set(value);
 }
 
 

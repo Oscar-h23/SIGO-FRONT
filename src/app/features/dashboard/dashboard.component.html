@@ -49,18 +49,22 @@
   <span>Año</span>
 
   <select
-    [ngModel]="anio()"
-    (ngModelChange)="onAnioModelChange($event)">
+  [value]="anio()"
+  (change)="onAnioChange($event)">
 
-    @for (item of anios; track item) {
+  @for (item of anios; track item) {
 
-      <option [ngValue]="item">
-        {{ item }}
-      </option>
+    <option
+      [value]="item"
+      [selected]="item === anio()">
 
-    }
+      {{ item }}
 
-  </select>
+    </option>
+
+  }
+
+</select>
 
 </label>
 
@@ -69,18 +73,22 @@
   <span>Mes</span>
 
   <select
-    [ngModel]="mes()"
-    (ngModelChange)="onMesModelChange($event)">
+  [value]="mes()"
+  (change)="onMesChange($event)">
 
-    @for (item of meses; track item.id) {
+  @for (item of meses; track item.id) {
 
-      <option [ngValue]="item.id">
-        {{ item.corto }}
-      </option>
+    <option
+      [value]="item.id"
+      [selected]="item.id === mes()">
 
-    }
+      {{ item.corto }}
 
-  </select>
+    </option>
+
+  }
+
+</select>
 
 </label>
 
