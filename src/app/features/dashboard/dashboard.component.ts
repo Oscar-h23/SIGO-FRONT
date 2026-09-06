@@ -33,9 +33,16 @@ export class DashboardComponent implements OnInit {
   private readonly api = inject(AsistenciaApiService);
 
   readonly loading = signal(true);
+  // Carga aparte solo para el gráfico mensual (año completo). No bloquea el resto del dashboard.
+  readonly loadingMensual = signal(true);
   readonly error = signal('');
   readonly plazas = signal<Plaza[]>([]);
   readonly turnos = signal<Turno[]>([]);
+
+  // Antes: registrosAnio traía TODO el año para pintar un solo mes -> payload enorme en la carga inicial.
+  // Ahora: registrosMesActual trae solo el rango del mes seleccionado (rápido, liviano).
+  readonly registrosMesActual = signal<AsistenciaResponse[]>([]);
+  // registrosAnio solo alimenta el gráfico de tendencia mensual; se carga en segundo plano.
   readonly registrosAnio = signal<AsistenciaResponse[]>([]);
 
   private readonly ahora = new Date();
@@ -53,6 +60,10 @@ readonly plazaId =
 
 readonly turnoId =
   signal<number | null>(null);
+
+  // Cache en memoria: evita re-pedir al backend un (mes,plaza) o (año,plaza) ya consultado.
+  private readonly cacheMes = new Map<string, AsistenciaResponse[]>();
+  private readonly cacheAnio = new Map<string, AsistenciaResponse[]>();
 
   readonly meses = [
     { id: 1, nombre: 'Enero', corto: 'Ene' },
@@ -74,18 +85,16 @@ readonly turnoId =
 
   readonly nombreMes = computed(() => this.meses.find((m) => m.id === this.mes())?.nombre ?? 'Mes');
 
-  readonly registrosBase = computed(() => {
-    const plazaId = this.plazaId();
+  // Solo filtra por turno (plaza ya viene filtrada desde el backend en la query).
+  // El array de entrada es ahora un solo mes (~decenas de filas), no el año completo.
+  readonly registrosMes = computed(() => {
     const turnoId = this.turnoId();
-    return this.registrosAnio().filter((r) =>
-      (!plazaId || r.plazaId === plazaId) &&
-      (!turnoId || r.turnoId === turnoId)
-    );
+    return this.registrosMesActual().filter((r) => !turnoId || r.turnoId === turnoId);
   });
 
-  readonly registrosMes = computed(() => {
-    const mes = this.mes();
-    return this.registrosBase().filter((r) => this.monthOf(r.fecha) === mes);
+  readonly registrosAnioFiltrado = computed(() => {
+    const turnoId = this.turnoId();
+    return this.registrosAnio().filter((r) => !turnoId || r.turnoId === turnoId);
   });
 
   readonly totalRegistros = computed(() => this.registrosMes().length);
@@ -93,18 +102,56 @@ readonly turnoId =
   readonly registros100 = computed(() => this.registrosMes().filter((r) => Number(r.porcentaje) >= 99.995).length);
   readonly asistenciaPromedio = computed(() => this.weightedPercentage(this.registrosMes()));
 
-  readonly mensual = computed<LinePoint[]>(() => this.meses.map((m) => ({
-    label: m.corto,
-    value: this.percentageFor(this.registrosBase().filter((r) => this.monthOf(r.fecha) === m.id))
-  })));
+  // Un solo recorrido de registrosAnioFiltrado() agrupando por mes (antes: 12 .filter() sobre el año completo).
+  private readonly acumuladoPorMes = computed(() => {
+    const acumulado = new Map<number, { programados: number; presentes: number }>();
+    for (const r of this.registrosAnioFiltrado()) {
+      const mes = this.monthOf(r.fecha);
+      const actual = acumulado.get(mes) ?? { programados: 0, presentes: 0 };
+      actual.programados += Number(r.programados || 0);
+      actual.presentes += Number(r.presentes || 0);
+      acumulado.set(mes, actual);
+    }
+    return acumulado;
+  });
+
+  readonly mensual = computed<LinePoint[]>(() => {
+    const acumulado = this.acumuladoPorMes();
+    return this.meses.map((m) => {
+      const datos = acumulado.get(m.id);
+      return {
+        label: m.corto,
+        value: datos && datos.programados > 0
+          ? Math.round((datos.presentes / datos.programados) * 1000) / 10
+          : null
+      };
+    });
+  });
+
+  // Un solo recorrido de registrosMes() agrupando por día (antes: hasta 31 .filter()).
+  private readonly acumuladoPorDia = computed(() => {
+    const acumulado = new Map<number, { programados: number; presentes: number }>();
+    for (const r of this.registrosMes()) {
+      const dia = this.dayOf(r.fecha);
+      const actual = acumulado.get(dia) ?? { programados: 0, presentes: 0 };
+      actual.programados += Number(r.programados || 0);
+      actual.presentes += Number(r.presentes || 0);
+      acumulado.set(dia, actual);
+    }
+    return acumulado;
+  });
 
   readonly diario = computed<LinePoint[]>(() => {
     const dias = new Date(this.anio(), this.mes(), 0).getDate();
+    const acumulado = this.acumuladoPorDia();
     return Array.from({ length: dias }, (_, i) => {
       const dia = i + 1;
+      const datos = acumulado.get(dia);
       return {
         label: String(dia),
-        value: this.percentageFor(this.registrosMes().filter((r) => this.dayOf(r.fecha) === dia))
+        value: datos && datos.programados > 0
+          ? Math.round((datos.presentes / datos.programados) * 1000) / 10
+          : null
       };
     });
   });
@@ -124,11 +171,23 @@ readonly turnoId =
 
   readonly maxMotivos = computed(() => Math.max(...this.motivos().map((m) => m.total), 1));
 
-  readonly resumenTurnos = computed<TurnoResumen[]>(() => this.turnos().map((turno) => ({
-    id: turno.id,
-    nombre: `Turno ${turno.codigo}`,
-    porcentaje: this.weightedPercentage(this.registrosMes().filter((r) => r.turnoId === turno.id))
-  })));
+  // Un solo recorrido de registrosMes() agrupando por turno (antes: un .filter() por turno).
+  readonly resumenTurnos = computed<TurnoResumen[]>(() => {
+    const acumulado = new Map<number, { programados: number; presentes: number }>();
+    for (const r of this.registrosMes()) {
+      const actual = acumulado.get(r.turnoId) ?? { programados: 0, presentes: 0 };
+      actual.programados += Number(r.programados || 0);
+      actual.presentes += Number(r.presentes || 0);
+      acumulado.set(r.turnoId, actual);
+    }
+    return this.turnos().map((turno) => {
+      const datos = acumulado.get(turno.id);
+      const porcentaje = datos && datos.programados > 0
+        ? Math.round((datos.presentes / datos.programados) * 1000) / 10
+        : 0;
+      return { id: turno.id, nombre: `Turno ${turno.codigo}`, porcentaje };
+    });
+  });
 
   ngOnInit(): void {
   this.cargarInicial();
@@ -147,7 +206,8 @@ onAnioChange(
 
   this.anio.set(value);
 
-  this.cargarRegistros();
+  this.cargarMesActual();
+  this.cargarAnioEnSegundoPlano();
 }
 
 onMesChange(
@@ -162,15 +222,19 @@ onMesChange(
     );
 
   this.mes.set(value);
+  this.cargarMesActual();
 }
 
 
   onPlazaChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     this.plazaId.set(value ? Number(value) : null);
+    this.cargarMesActual();
+    this.cargarAnioEnSegundoPlano();
   }
 
   onTurnoChange(event: Event): void {
+    // El turno solo filtra en el cliente sobre los datos ya cargados: no dispara ningún request.
     const value = (event.target as HTMLSelectElement).value;
     this.turnoId.set(value ? Number(value) : null);
   }
@@ -178,34 +242,70 @@ onMesChange(
   cargarInicial(): void {
     this.loading.set(true);
     this.error.set('');
-    const { inicio, fin } = this.yearRange();
+    const { inicio, fin } = this.mesRange();
 
     forkJoin({
       plazas: this.api.getPlazas(),
       turnos: this.api.getTurnos(),
-      registros: this.api.listarAsistencias(inicio, fin)
+      registros: this.api.listarAsistencias(inicio, fin, this.plazaId())
     }).subscribe({
       next: ({ plazas, turnos, registros }) => {
         this.plazas.set(plazas);
         this.turnos.set(turnos);
-        this.registrosAnio.set(registros);
+        this.registrosMesActual.set(registros);
+        this.cacheMes.set(this.claveMes(), registros);
+        this.loading.set(false);
+      },
+      error: (err) => this.handleError(err)
+    });
+
+    // La tendencia anual no bloquea la pintura inicial del dashboard.
+    this.cargarAnioEnSegundoPlano();
+  }
+
+  /** Carga rápida: solo el rango del mes/año/plaza seleccionados. Es lo único que bloquea `loading`. */
+  cargarMesActual(): void {
+    const clave = this.claveMes();
+    const cacheado = this.cacheMes.get(clave);
+    if (cacheado) {
+      this.registrosMesActual.set(cacheado);
+      return;
+    }
+
+    this.loading.set(true);
+    this.error.set('');
+    const { inicio, fin } = this.mesRange();
+
+    this.api.listarAsistencias(inicio, fin, this.plazaId()).subscribe({
+      next: (registros) => {
+        this.registrosMesActual.set(registros);
+        this.cacheMes.set(clave, registros);
         this.loading.set(false);
       },
       error: (err) => this.handleError(err)
     });
   }
 
-  cargarRegistros(): void {
-    this.loading.set(true);
-    this.error.set('');
+  /** Carga en segundo plano: año completo, únicamente para el gráfico de tendencia mensual. */
+  cargarAnioEnSegundoPlano(): void {
+    const clave = this.claveAnio();
+    const cacheado = this.cacheAnio.get(clave);
+    if (cacheado) {
+      this.registrosAnio.set(cacheado);
+      this.loadingMensual.set(false);
+      return;
+    }
+
+    this.loadingMensual.set(true);
     const { inicio, fin } = this.yearRange();
 
-    this.api.listarAsistencias(inicio, fin).subscribe({
+    this.api.listarAsistencias(inicio, fin, this.plazaId()).subscribe({
       next: (registros) => {
         this.registrosAnio.set(registros);
-        this.loading.set(false);
+        this.cacheAnio.set(clave, registros);
+        this.loadingMensual.set(false);
       },
-      error: (err) => this.handleError(err)
+      error: () => this.loadingMensual.set(false)
     });
   }
 
@@ -249,11 +349,6 @@ onMesChange(
     return index;
   }
 
-  private percentageFor(registros: AsistenciaResponse[]): number | null {
-    if (!registros.length) return null;
-    return this.weightedPercentage(registros);
-  }
-
   private weightedPercentage(registros: AsistenciaResponse[]): number {
     const programados = registros.reduce((acc, r) => acc + Number(r.programados || 0), 0);
     const presentes = registros.reduce((acc, r) => acc + Number(r.presentes || 0), 0);
@@ -274,6 +369,26 @@ onMesChange(
       inicio: `${this.anio()}-01-01`,
       fin: `${this.anio()}-12-31`
     };
+  }
+
+  /** Rango del mes seleccionado, ej: 2026-09-01 a 2026-09-30. */
+  private mesRange(): { inicio: string; fin: string } {
+    const anio = this.anio();
+    const mes = this.mes();
+    const ultimoDia = new Date(anio, mes, 0).getDate();
+    const mm = String(mes).padStart(2, '0');
+    return {
+      inicio: `${anio}-${mm}-01`,
+      fin: `${anio}-${mm}-${String(ultimoDia).padStart(2, '0')}`
+    };
+  }
+
+  private claveMes(): string {
+    return `${this.anio()}-${this.mes()}-${this.plazaId() ?? 'todas'}`;
+  }
+
+  private claveAnio(): string {
+    return `${this.anio()}-${this.plazaId() ?? 'todas'}`;
   }
 
   private handleError(err: unknown): void {

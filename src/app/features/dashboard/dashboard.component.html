@@ -352,7 +352,15 @@
 
         </div>
 
-        @if (!registrosBase().length) {
+        @if (loadingMensual()) {
+
+          <div class="chart-empty">
+
+            Cargando tendencia anual…
+
+          </div>
+
+        } @else if (!registrosAnioFiltrado().length) {
 
           <div class="chart-empty">
 

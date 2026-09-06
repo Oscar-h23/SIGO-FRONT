@@ -416,6 +416,24 @@ export class AsistenciaApiService {
       }
     );
   }
+  getAnual(
+  anio: number
+): Observable<DashboardPunto[]> {
+
+  const params =
+    new HttpParams()
+      .set(
+        'anio',
+        anio.toString()
+      );
+
+  return this.http.get<DashboardPunto[]>(
+    `${this.api}/dashboard/asistencia/anual`,
+    {
+      params
+    }
+  );
+}
 
   /*
    * =========================================================
