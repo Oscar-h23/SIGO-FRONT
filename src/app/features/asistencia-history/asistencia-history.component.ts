@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 
 import { jsPDF } from 'jspdf';
+import { firstValueFrom } from 'rxjs';
 
 import {
   AsistenciaResponse,
@@ -222,6 +223,112 @@ export class AsistenciaHistoryComponent implements OnInit {
 
   /*
    * =========================================================
+   * PORCENTAJE MENSUAL REAL
+   * =========================================================
+   */
+
+  private async obtenerPorcentajeMensual(
+    registro: AsistenciaResponse
+  ): Promise<number> {
+
+    if (!registro.fecha) {
+      return 0;
+    }
+
+    const [
+      anioTexto,
+      mesTexto
+    ] = registro.fecha.split('-');
+
+    const anio =
+      Number(anioTexto);
+
+    const mes =
+      Number(mesTexto);
+
+    const inicioMes =
+      `${anioTexto}-${mesTexto}-01`;
+
+    const ultimoDia =
+      new Date(
+        anio,
+        mes,
+        0
+      ).getDate();
+
+    const finMes =
+      `${anioTexto}-${mesTexto}-${String(
+        ultimoDia
+      ).padStart(
+        2,
+        '0'
+      )}`;
+
+    try {
+
+      const registrosMes =
+        await firstValueFrom(
+          this.api.listarAsistencias(
+            inicioMes,
+            finMes,
+            registro.plazaId
+          )
+        );
+
+      if (!registrosMes.length) {
+        return 0;
+      }
+
+      const totalProgramados =
+        registrosMes.reduce(
+          (
+            total,
+            item
+          ) =>
+            total +
+            Number(
+              item.programados ?? 0
+            ),
+          0
+        );
+
+      const totalPresentes =
+        registrosMes.reduce(
+          (
+            total,
+            item
+          ) =>
+            total +
+            Number(
+              item.presentes ?? 0
+            ),
+          0
+        );
+
+      if (totalProgramados <= 0) {
+        return 0;
+      }
+
+      return (
+        totalPresentes /
+        totalProgramados
+      ) * 100;
+
+    } catch (error) {
+
+      console.error(
+        'Error obteniendo porcentaje mensual:',
+        error
+      );
+
+      return Number(
+        registro.porcentaje ?? 0
+      );
+    }
+  }
+
+  /*
+   * =========================================================
    * PDF
    * =========================================================
    */
@@ -278,10 +385,6 @@ export class AsistenciaHistoryComponent implements OnInit {
       const green:
         [number, number, number] =
         [0, 132, 72];
-
-      const red:
-        [number, number, number] =
-        [218, 0, 48];
 
       const yellow:
         [number, number, number] =
@@ -460,78 +563,40 @@ export class AsistenciaHistoryComponent implements OnInit {
       const summaryY = 46;
 
       this.dibujarIndicador(
-        pdf,
-        7,
-        summaryY,
-        37,
-        31,
+        pdf, 7, summaryY, 34, 31,
         'Programados',
-        String(
-          registro.programados
-        ).padStart(
-          2,
-          '0'
-        ),
+        String(registro.programados).padStart(2, '0'),
         navy
       );
 
       this.dibujarIndicador(
-        pdf,
-        47,
-        summaryY,
-        43,
-        31,
+        pdf, 44, summaryY, 38, 31,
         'Total asistencia',
-        String(
-          registro.presentes
-        ).padStart(
-          2,
-          '0'
-        ),
+        String(registro.presentes).padStart(2, '0'),
         navy
       );
 
-      this.dibujarPorcentaje(
-        pdf,
-        93,
-        summaryY,
-        51,
-        31,
-        Number(
-          registro.porcentaje ?? 0
-        ),
+      this.dibujarPorcentajeResumen(
+        pdf, 85, summaryY, 44, 31,
+        Number(registro.porcentaje ?? 0),
+        'Porcentaje de asistencia',
         navy,
         green
       );
 
-      this.dibujarIndicador(
-        pdf,
-        147,
-        summaryY,
-        30,
-        31,
-        'Ausencias',
-        String(
-          registro.ausentes
-        ).padStart(
-          2,
-          '0'
-        ),
-        red
+      const porcentajeMes =
+        await this.obtenerPorcentajeMensual(registro);
+
+      this.dibujarPorcentajeResumen(
+        pdf, 132, summaryY, 44, 31,
+        porcentajeMes,
+        'Porcentaje del mes',
+        navy,
+        green
       );
 
-      /*
-       * Tabla resumida.
-       * Máximo 4 personas.
-       */
-
       this.dibujarTablaAusenciasResumen(
-        pdf,
-        registro,
-        180,
-        summaryY,
-        110,
-        31
+        pdf, registro, 179, summaryY, 111, 31
       );
 
       /*
@@ -1272,190 +1337,83 @@ await this.dibujarEvidencia(
 
   /*
    * =========================================================
-   * PORCENTAJE
+   * PORCENTAJES DEL RESUMEN
    * =========================================================
    */
 
-  private dibujarPorcentaje(
+  private dibujarPorcentajeResumen(
     pdf: jsPDF,
     x: number,
     y: number,
     ancho: number,
     alto: number,
     porcentaje: number,
-    azul:
-      [number, number, number],
-    verde:
-      [number, number, number]
+    titulo: string,
+    azul: [number, number, number],
+    verde: [number, number, number]
   ): void {
 
     const porcentajeSeguro =
-      Math.max(
-        0,
-        Math.min(
-          Number(
-            porcentaje || 0
-          ),
-          100
-        )
-      );
+      Math.max(0, Math.min(Number(porcentaje || 0), 100));
 
-    pdf.setFillColor(
-      255,
-      255,
-      255
-    );
+    pdf.setFillColor(255, 255, 255);
+    pdf.setDrawColor(150, 205, 235);
+    pdf.setLineWidth(0.3);
+    pdf.roundedRect(x, y, ancho, alto, 2, 2, 'FD');
 
-    pdf.setDrawColor(
-      150,
-      205,
-      235
-    );
+    pdf.setFillColor(...azul);
+    pdf.roundedRect(x, y, ancho, 8, 2, 2, 'F');
 
-    pdf.roundedRect(
-      x,
-      y,
-      ancho,
-      alto,
-      2,
-      2,
-      'FD'
-    );
-
-    pdf.setFillColor(
-      ...azul
-    );
-
-    pdf.roundedRect(
-      x,
-      y,
-      ancho,
-      8,
-      2,
-      2,
-      'F'
-    );
-
-    pdf.setTextColor(
-      255,
-      255,
-      255
-    );
-
-    pdf.setFont(
-      'helvetica',
-      'bold'
-    );
-
-    pdf.setFontSize(7.2);
-
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(6.4);
     pdf.text(
-      'Porcentaje de asistencia',
+      titulo,
       x + ancho / 2,
       y + 5.3,
-      {
-        align: 'center'
-      }
+      { align: 'center', maxWidth: ancho - 3 }
     );
 
-    pdf.setDrawColor(
-      205,
-      215,
-      220
-    );
+    const centroX = x + 12;
+    const centroY = y + 19.5;
+    const radio = 6.5;
 
-    pdf.setLineWidth(2.7);
+    pdf.setDrawColor(205, 215, 220);
+    pdf.setLineWidth(2.6);
+    pdf.circle(centroX, centroY, radio);
 
-    pdf.circle(
-      x + 12.5,
-      y + 19.5,
-      6.7
-    );
+    pdf.setDrawColor(...verde);
 
-    pdf.setDrawColor(
-      ...verde
-    );
+    const angulo = porcentajeSeguro / 100 * 360;
+    const pasos = Math.max(1, Math.ceil(angulo / 5));
 
-    const angulo =
-      porcentajeSeguro /
-      100 *
-      360;
+    let anterior: { x: number; y: number } | null = null;
 
-    const steps = 50;
-
-    let anterior:
-      {
-        x: number;
-        y: number;
-      } | null = null;
-
-    for (
-      let i = 0;
-      i <= steps;
-      i++
-    ) {
-
-      const angle =
-        (
-          -90 +
-          angulo *
-          i /
-          steps
-        ) *
-        Math.PI /
-        180;
+    for (let i = 0; i <= pasos; i++) {
+      const anguloActual =
+        (-90 + (angulo * i / pasos)) * Math.PI / 180;
 
       const punto = {
-
-        x:
-          x +
-          12.5 +
-          6.7 *
-          Math.cos(
-            angle
-          ),
-
-        y:
-          y +
-          19.5 +
-          6.7 *
-          Math.sin(
-            angle
-          )
-
+        x: centroX + radio * Math.cos(anguloActual),
+        y: centroY + radio * Math.sin(anguloActual)
       };
 
       if (anterior) {
-
-        pdf.line(
-          anterior.x,
-          anterior.y,
-          punto.x,
-          punto.y
-        );
+        pdf.line(anterior.x, anterior.y, punto.x, punto.y);
       }
 
-      anterior =
-        punto;
+      anterior = punto;
     }
 
     pdf.setLineWidth(0.2);
-
-    pdf.setTextColor(
-      ...verde
-    );
-
-    pdf.setFont(
-      'helvetica',
-      'bold'
-    );
-
-    pdf.setFontSize(15);
+    pdf.setTextColor(...verde);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(11.5);
 
     pdf.text(
       `${porcentajeSeguro.toFixed(1)}%`,
-      x + 26,
-      y + 21.5
+      x + 23,
+      y + 21.3
     );
   }
 

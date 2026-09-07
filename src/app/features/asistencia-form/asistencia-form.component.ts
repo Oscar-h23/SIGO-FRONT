@@ -518,17 +518,103 @@ implements OnInit {
       return;
     }
 
+    this.setEvidenceFile(
+      tipo,
+      file
+    );
 
     /*
-     * Tipos permitidos.
+     * Permite volver a seleccionar
+     * el mismo archivo.
      */
+    input.value = '';
+  }
+
+
+  onEvidencePaste(
+    tipo: EvidenciaTipo,
+    event: ClipboardEvent
+  ): void {
+
+    const items =
+      event.clipboardData?.items;
+
+    if (!items) {
+
+      this.error.set(
+        'No se pudo acceder al portapapeles.'
+      );
+
+      return;
+    }
+
+    const imageItem =
+      Array.from(items)
+        .find(
+          item =>
+            item.type.startsWith(
+              'image/'
+            )
+        );
+
+    if (!imageItem) {
+
+      this.error.set(
+        'El portapapeles no contiene una imagen. Copia la imagen desde DSS e inténtalo nuevamente.'
+      );
+
+      return;
+    }
+
+    const clipboardFile =
+      imageItem.getAsFile();
+
+    if (!clipboardFile) {
+
+      this.error.set(
+        'No se pudo leer la imagen copiada desde DSS.'
+      );
+
+      return;
+    }
+
+    event.preventDefault();
+
+    const extension =
+      this.extensionFromMime(
+        clipboardFile.type
+      );
+
+    const file =
+      new File(
+        [clipboardFile],
+        `DSS_${tipo}_${Date.now()}.${extension}`,
+        {
+          type:
+            clipboardFile.type ||
+            'image/png',
+          lastModified:
+            Date.now()
+        }
+      );
+
+    this.setEvidenceFile(
+      tipo,
+      file
+    );
+  }
+
+
+  private setEvidenceFile(
+    tipo: EvidenciaTipo,
+    file: File
+  ): void {
 
     const tiposPermitidos = [
       'image/jpeg',
       'image/png',
       'image/webp'
     ];
-
 
     if (
       !tiposPermitidos.includes(
@@ -540,21 +626,13 @@ implements OnInit {
         'Solo se permiten imágenes JPG, PNG o WEBP.'
       );
 
-      input.value = '';
-
       return;
     }
-
-
-    /*
-     * Máximo 10 MB por fotografía.
-     */
 
     const maxSize =
       10 *
       1024 *
       1024;
-
 
     if (
       file.size >
@@ -565,16 +643,12 @@ implements OnInit {
         'Cada fotografía debe pesar como máximo 10 MB.'
       );
 
-      input.value = '';
-
       return;
     }
-
 
     this.error.set(
       ''
     );
-
 
     switch (tipo) {
 
@@ -604,14 +678,25 @@ implements OnInit {
 
         break;
     }
+  }
 
 
-    /*
-     * Permite volver a seleccionar
-     * el mismo archivo si se elimina.
-     */
+  private extensionFromMime(
+    mime: string
+  ): string {
 
-    input.value = '';
+    switch (mime) {
+
+      case 'image/jpeg':
+        return 'jpg';
+
+      case 'image/webp':
+        return 'webp';
+
+      case 'image/png':
+      default:
+        return 'png';
+    }
   }
 
 

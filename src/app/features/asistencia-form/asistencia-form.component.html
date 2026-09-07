@@ -823,33 +823,64 @@
 
             @if (!evidenciaCalentamiento()) {
 
-              <label class="evidence-dropzone">
+              <div class="evidence-input-options">
 
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  (change)="
-                    onEvidenceFile(
+                <label class="evidence-dropzone evidence-option">
+
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    (change)="
+                      onEvidenceFile(
+                        'CALENTAMIENTO',
+                        $event
+                      )
+                    "
+                    hidden
+                  >
+
+                  <span class="upload-icon">
+                    ↑
+                  </span>
+
+                  <strong>
+                    Seleccionar fotografía
+                  </strong>
+
+                  <small>
+                    JPG, PNG o WEBP
+                  </small>
+
+                </label>
+
+
+                <div
+                  class="evidence-pastezone evidence-option"
+                  tabindex="0"
+                  (paste)="
+                    onEvidencePaste(
                       'CALENTAMIENTO',
                       $event
                     )
                   "
-                  hidden
                 >
 
-                <span class="upload-icon">
-                  ↑
-                </span>
+                  <span class="paste-icon">
+                    ⎘
+                  </span>
 
-                <strong>
-                  Seleccionar fotografía
-                </strong>
+                  <strong>
+                    Pegar desde DSS
+                  </strong>
 
-                <small>
-                  JPG, PNG o WEBP
-                </small>
+                  <small>
+                    Haz clic aquí y presiona
+                    <kbd>Ctrl</kbd> + <kbd>V</kbd>
+                  </small>
 
-              </label>
+                </div>
+
+              </div>
 
             } @else {
 
@@ -912,33 +943,64 @@
 
             @if (!evidenciaInicioTurno()) {
 
-              <label class="evidence-dropzone">
+              <div class="evidence-input-options">
 
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  (change)="
-                    onEvidenceFile(
+                <label class="evidence-dropzone evidence-option">
+
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    (change)="
+                      onEvidenceFile(
+                        'INICIO_TURNO',
+                        $event
+                      )
+                    "
+                    hidden
+                  >
+
+                  <span class="upload-icon">
+                    ↑
+                  </span>
+
+                  <strong>
+                    Seleccionar fotografía
+                  </strong>
+
+                  <small>
+                    JPG, PNG o WEBP
+                  </small>
+
+                </label>
+
+
+                <div
+                  class="evidence-pastezone evidence-option"
+                  tabindex="0"
+                  (paste)="
+                    onEvidencePaste(
                       'INICIO_TURNO',
                       $event
                     )
                   "
-                  hidden
                 >
 
-                <span class="upload-icon">
-                  ↑
-                </span>
+                  <span class="paste-icon">
+                    ⎘
+                  </span>
 
-                <strong>
-                  Seleccionar fotografía
-                </strong>
+                  <strong>
+                    Pegar desde DSS
+                  </strong>
 
-                <small>
-                  JPG, PNG o WEBP
-                </small>
+                  <small>
+                    Haz clic aquí y presiona
+                    <kbd>Ctrl</kbd> + <kbd>V</kbd>
+                  </small>
 
-              </label>
+                </div>
+
+              </div>
 
             } @else {
 
@@ -1001,33 +1063,64 @@
 
             @if (!evidenciaTapones()) {
 
-              <label class="evidence-dropzone">
+              <div class="evidence-input-options">
 
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  (change)="
-                    onEvidenceFile(
+                <label class="evidence-dropzone evidence-option">
+
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    (change)="
+                      onEvidenceFile(
+                        'TAPONES_AUDITIVOS',
+                        $event
+                      )
+                    "
+                    hidden
+                  >
+
+                  <span class="upload-icon">
+                    ↑
+                  </span>
+
+                  <strong>
+                    Seleccionar fotografía
+                  </strong>
+
+                  <small>
+                    JPG, PNG o WEBP
+                  </small>
+
+                </label>
+
+
+                <div
+                  class="evidence-pastezone evidence-option"
+                  tabindex="0"
+                  (paste)="
+                    onEvidencePaste(
                       'TAPONES_AUDITIVOS',
                       $event
                     )
                   "
-                  hidden
                 >
 
-                <span class="upload-icon">
-                  ↑
-                </span>
+                  <span class="paste-icon">
+                    ⎘
+                  </span>
 
-                <strong>
-                  Seleccionar fotografía
-                </strong>
+                  <strong>
+                    Pegar desde DSS
+                  </strong>
 
-                <small>
-                  JPG, PNG o WEBP
-                </small>
+                  <small>
+                    Haz clic aquí y presiona
+                    <kbd>Ctrl</kbd> + <kbd>V</kbd>
+                  </small>
 
-              </label>
+                </div>
+
+              </div>
 
             } @else {
 
