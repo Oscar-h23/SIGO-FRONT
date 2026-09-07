@@ -92,6 +92,17 @@ export class AsistenciaEditComponent implements OnInit {
 
   presentes = 0;
 
+  /*
+   * Personal adicional solicitado para apoyar el turno.
+   * No interviene en el porcentaje de asistencia.
+   */
+  apoyoSolicitado = 0;
+
+  /*
+   * Detalle opcional del apoyo coordinado.
+   */
+  detalleApoyo = '';
+
   notas = '';
 
   ausencias: AusenciaRequest[] = [];
@@ -214,6 +225,12 @@ export class AsistenciaEditComponent implements OnInit {
 
     this.presentes =
       asistencia.presentes;
+
+    this.apoyoSolicitado =
+      asistencia.apoyoSolicitado ?? 0;
+
+    this.detalleApoyo =
+      asistencia.detalleApoyo ?? '';
 
     this.notas =
       asistencia.notas ?? '';
@@ -662,6 +679,32 @@ export class AsistenciaEditComponent implements OnInit {
     }
 
     if (
+      this.apoyoSolicitado < 0 ||
+      !Number.isInteger(
+        Number(this.apoyoSolicitado)
+      )
+    ) {
+
+      this.error.set(
+        'El apoyo solicitado debe ser un número entero mayor o igual a 0.'
+      );
+
+      return false;
+    }
+
+    if (
+      this.detalleApoyo &&
+      this.detalleApoyo.trim().length > 500
+    ) {
+
+      this.error.set(
+        'El detalle del apoyo no puede superar los 500 caracteres.'
+      );
+
+      return false;
+    }
+
+    if (
       this.ausencias.length !==
       this.cantidadAusentes
     ) {
@@ -770,6 +813,20 @@ export class AsistenciaEditComponent implements OnInit {
 
         presentes:
           this.presentes,
+
+        apoyoSolicitado:
+          Number(
+            this.apoyoSolicitado ?? 0
+          ),
+
+        detalleApoyo:
+          Number(this.apoyoSolicitado ?? 0) > 0
+            ? (
+                this.detalleApoyo?.trim()
+                  ? this.detalleApoyo.trim()
+                  : null
+              )
+            : null,
 
         notas:
           this.notas?.trim()

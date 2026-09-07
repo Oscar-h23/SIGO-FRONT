@@ -183,6 +183,23 @@ implements OnInit {
         ]
       ],
 
+      /*
+       * Personal adicional solicitado para apoyar el turno.
+       * No interviene en el cálculo de asistencia.
+       */
+      apoyoSolicitado: [
+        0,
+        [
+          Validators.required,
+          Validators.min(0)
+        ]
+      ],
+
+      /*
+       * Descripción opcional del apoyo solicitado.
+       */
+      detalleApoyo: [''],
+
       notas: [''],
 
       ausencias:
@@ -981,6 +998,22 @@ implements OnInit {
             raw.presentes
           ),
 
+        /*
+         * El apoyo solicitado es personal adicional.
+         * No se suma a presentes ni modifica el porcentaje.
+         */
+        apoyoSolicitado:
+          Number(
+            raw.apoyoSolicitado ?? 0
+          ),
+
+        detalleApoyo:
+          Number(raw.apoyoSolicitado ?? 0) > 0
+            ? raw.detalleApoyo
+                ?.trim() ||
+              null
+            : null,
+
         notas:
           raw.notas
             ?.trim() ||
@@ -1431,6 +1464,12 @@ implements OnInit {
 
       presentes:
         0,
+
+      apoyoSolicitado:
+        0,
+
+      detalleApoyo:
+        '',
 
       notas:
         ''

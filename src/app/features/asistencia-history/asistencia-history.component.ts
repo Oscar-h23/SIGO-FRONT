@@ -563,21 +563,40 @@ export class AsistenciaHistoryComponent implements OnInit {
       const summaryY = 46;
 
       this.dibujarIndicador(
-        pdf, 7, summaryY, 34, 31,
+        pdf, 7, summaryY, 31, 31,
         'Programados',
         String(registro.programados).padStart(2, '0'),
         navy
       );
 
       this.dibujarIndicador(
-        pdf, 44, summaryY, 38, 31,
+        pdf, 41, summaryY, 34, 31,
         'Total asistencia',
         String(registro.presentes).padStart(2, '0'),
         navy
       );
 
+      /*
+       * Personal de apoyo:
+       * no interviene en el porcentaje de asistencia.
+       */
+      this.dibujarIndicadorApoyo(
+        pdf,
+        78,
+        summaryY,
+        34,
+        31,
+        Number(registro.apoyoSolicitado ?? 0),
+        registro.detalleApoyo,
+        navy
+      );
+
+      /*
+       * Los porcentajes se muestran sin círculos para
+       * aprovechar mejor el espacio del resumen.
+       */
       this.dibujarPorcentajeResumen(
-        pdf, 85, summaryY, 44, 31,
+        pdf, 115, summaryY, 37, 31,
         Number(registro.porcentaje ?? 0),
         'Porcentaje de asistencia',
         navy,
@@ -588,15 +607,19 @@ export class AsistenciaHistoryComponent implements OnInit {
         await this.obtenerPorcentajeMensual(registro);
 
       this.dibujarPorcentajeResumen(
-        pdf, 132, summaryY, 44, 31,
+        pdf, 155, summaryY, 37, 31,
         porcentajeMes,
         'Porcentaje del mes',
         navy,
         green
       );
 
+      /*
+       * No se agrega un indicador independiente de ausentes.
+       * El total ya aparece en el título del listado de ausencias.
+       */
       this.dibujarTablaAusenciasResumen(
-        pdf, registro, 179, summaryY, 111, 31
+        pdf, registro, 195, summaryY, 95, 31
       );
 
       /*
@@ -1323,7 +1346,7 @@ await this.dibujarEvidencia(
       'bold'
     );
 
-    pdf.setFontSize(20);
+    pdf.setFontSize(23);
 
     pdf.text(
       valor,
@@ -1354,66 +1377,223 @@ await this.dibujarEvidencia(
   ): void {
 
     const porcentajeSeguro =
-      Math.max(0, Math.min(Number(porcentaje || 0), 100));
+      Math.max(
+        0,
+        Math.min(
+          Number(porcentaje || 0),
+          100
+        )
+      );
 
-    pdf.setFillColor(255, 255, 255);
-    pdf.setDrawColor(150, 205, 235);
+    pdf.setFillColor(
+      255,
+      255,
+      255
+    );
+
+    pdf.setDrawColor(
+      150,
+      205,
+      235
+    );
+
     pdf.setLineWidth(0.3);
-    pdf.roundedRect(x, y, ancho, alto, 2, 2, 'FD');
 
-    pdf.setFillColor(...azul);
-    pdf.roundedRect(x, y, ancho, 8, 2, 2, 'F');
+    pdf.roundedRect(
+      x,
+      y,
+      ancho,
+      alto,
+      2,
+      2,
+      'FD'
+    );
 
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(6.4);
+    pdf.setFillColor(
+      ...azul
+    );
+
+    pdf.roundedRect(
+      x,
+      y,
+      ancho,
+      8,
+      2,
+      2,
+      'F'
+    );
+
+    pdf.setTextColor(
+      255,
+      255,
+      255
+    );
+
+    pdf.setFont(
+      'helvetica',
+      'bold'
+    );
+
+    pdf.setFontSize(
+      titulo === 'Porcentaje del mes'
+        ? 8
+        : 7
+    );
+
     pdf.text(
       titulo,
       x + ancho / 2,
       y + 5.3,
-      { align: 'center', maxWidth: ancho - 3 }
+      {
+        align: 'center',
+        maxWidth: ancho - 3
+      }
     );
 
-    const centroX = x + 12;
-    const centroY = y + 19.5;
-    const radio = 6.5;
+    /*
+     * Se elimina el círculo de progreso.
+     * Solo se muestra el porcentaje centrado.
+     */
+    pdf.setTextColor(
+      ...verde
+    );
 
-    pdf.setDrawColor(205, 215, 220);
-    pdf.setLineWidth(2.6);
-    pdf.circle(centroX, centroY, radio);
+    pdf.setFont(
+      'helvetica',
+      'bold'
+    );
 
-    pdf.setDrawColor(...verde);
+    const texto =
+      `${porcentajeSeguro.toFixed(1)}%`;
 
-    const angulo = porcentajeSeguro / 100 * 360;
-    const pasos = Math.max(1, Math.ceil(angulo / 5));
+    const fontSize =
+      this.calcularFuenteParaAncho(
+        pdf,
+        texto,
+        ancho - 6,
+        19,
+        12
+      );
 
-    let anterior: { x: number; y: number } | null = null;
-
-    for (let i = 0; i <= pasos; i++) {
-      const anguloActual =
-        (-90 + (angulo * i / pasos)) * Math.PI / 180;
-
-      const punto = {
-        x: centroX + radio * Math.cos(anguloActual),
-        y: centroY + radio * Math.sin(anguloActual)
-      };
-
-      if (anterior) {
-        pdf.line(anterior.x, anterior.y, punto.x, punto.y);
-      }
-
-      anterior = punto;
-    }
-
-    pdf.setLineWidth(0.2);
-    pdf.setTextColor(...verde);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(11.5);
+    pdf.setFontSize(
+      fontSize
+    );
 
     pdf.text(
-      `${porcentajeSeguro.toFixed(1)}%`,
-      x + 23,
-      y + 21.3
+      texto,
+      x + ancho / 2,
+      y + 21.5,
+      {
+        align: 'center',
+        maxWidth: ancho - 6
+      }
+    );
+  }
+
+  /*
+   * =========================================================
+   * INDICADOR DE PERSONAL DE APOYO
+   * =========================================================
+   */
+
+  private dibujarIndicadorApoyo(
+    pdf: jsPDF,
+    x: number,
+    y: number,
+    ancho: number,
+    alto: number,
+    cantidad: number,
+    detalle: string | null | undefined,
+    colorValor: [number, number, number]
+  ): void {
+
+    pdf.setFillColor(
+      255,
+      255,
+      255
+    );
+
+    pdf.setDrawColor(
+      150,
+      205,
+      235
+    );
+
+    pdf.roundedRect(
+      x,
+      y,
+      ancho,
+      alto,
+      2,
+      2,
+      'FD'
+    );
+
+    pdf.setFillColor(
+      0,
+      125,
+      195
+    );
+
+    pdf.roundedRect(
+      x,
+      y,
+      ancho,
+      8,
+      2,
+      2,
+      'F'
+    );
+
+    pdf.setTextColor(
+      255,
+      255,
+      255
+    );
+
+    pdf.setFont(
+      'helvetica',
+      'bold'
+    );
+
+    pdf.setFontSize(7);
+
+    pdf.text(
+      'Personal de apoyo',
+      x + ancho / 2,
+      y + 5.3,
+      {
+        align: 'center',
+        maxWidth: ancho - 3
+      }
+    );
+
+    pdf.setTextColor(
+      ...colorValor
+    );
+
+    pdf.setFont(
+      'helvetica',
+      'bold'
+    );
+
+    pdf.setFontSize(23);
+
+    pdf.text(
+      String(
+        Math.max(
+          0,
+          Number(cantidad || 0)
+        )
+      ).padStart(
+        2,
+        '0'
+      ),
+      x + ancho / 2,
+      y + 21.5,
+      {
+        align: 'center'
+      }
     );
   }
 
@@ -1717,7 +1897,7 @@ await this.dibujarEvidencia(
           'bold'
         );
 
-        pdf.setFontSize(5.8);
+        pdf.setFontSize(6);
 
         pdf.text(
           String(

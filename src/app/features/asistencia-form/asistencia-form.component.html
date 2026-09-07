@@ -411,6 +411,19 @@
           <div>
 
             <span>
+              Apoyo solicitado
+            </span>
+
+            <strong>
+              {{ form.controls.apoyoSolicitado.value ?? 0 }}
+            </strong>
+
+          </div>
+
+
+          <div>
+
+            <span>
               Asistencia
             </span>
 
@@ -519,6 +532,71 @@
             }
 
           </div>
+
+
+          <!-- ============================================ -->
+          <!-- APOYO SOLICITADO -->
+          <!-- ============================================ -->
+
+          <div class="form-field presentes-field">
+
+            <label>
+              Apoyo solicitado
+            </label>
+
+            <input
+              class="form-control"
+              type="number"
+              min="0"
+              formControlName="apoyoSolicitado"
+            >
+
+            <span class="helper">
+              Personal adicional coordinado para apoyar el turno.
+              No modifica el porcentaje de asistencia.
+            </span>
+
+            @if (
+              form.controls.apoyoSolicitado.invalid &&
+              form.controls.apoyoSolicitado.touched
+            ) {
+
+              <span class="helper error-text">
+                El apoyo solicitado no puede ser negativo.
+              </span>
+
+            }
+
+          </div>
+
+
+          <!-- ============================================ -->
+          <!-- DETALLE DEL APOYO -->
+          <!-- ============================================ -->
+
+          @if ((form.controls.apoyoSolicitado.value ?? 0) > 0) {
+
+            <div class="form-field">
+
+              <label>
+                Detalle del apoyo
+              </label>
+
+              <textarea
+                class="form-control textarea"
+                rows="3"
+                maxlength="500"
+                formControlName="detalleApoyo"
+                placeholder="Ej.: Se solicitó apoyo de un agente de otra plaza."
+              ></textarea>
+
+              <span class="helper">
+                Describe brevemente el apoyo coordinado.
+              </span>
+
+            </div>
+
+          }
 
         </div>
 

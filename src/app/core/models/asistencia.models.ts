@@ -64,6 +64,11 @@ export interface AusenciaRequest {
 
 }
 
+/*
+ * =========================================================
+ * REGISTRAR ASISTENCIA
+ * =========================================================
+ */
 export interface AsistenciaRequest {
 
   plazaId: number;
@@ -77,6 +82,19 @@ export interface AsistenciaRequest {
   programados: number;
 
   presentes: number;
+
+  /*
+   * Personal adicional solicitado para apoyar el turno.
+   *
+   * NO forma parte del cálculo del porcentaje
+   * de asistencia.
+   */
+  apoyoSolicitado: number;
+
+  /*
+   * Descripción del apoyo solicitado.
+   */
+  detalleApoyo?: string | null;
 
   notas?: string | null;
 
@@ -111,6 +129,16 @@ export interface AsistenciaUpdateRequest {
   programados: number;
 
   presentes: number;
+
+  /*
+   * Personal adicional solicitado para apoyar el turno.
+   */
+  apoyoSolicitado: number;
+
+  /*
+   * Descripción del apoyo solicitado.
+   */
+  detalleApoyo?: string | null;
 
   notas?: string | null;
 
@@ -170,6 +198,23 @@ export interface AsistenciaResponse {
 
   ausentes: number;
 
+  /*
+   * Personal adicional que apoyó el turno.
+   */
+  apoyoSolicitado: number;
+
+  /*
+   * Detalle del apoyo solicitado.
+   */
+  detalleApoyo: string | null;
+
+  /*
+   * El porcentaje continúa siendo:
+   *
+   * presentes / programados * 100
+   *
+   * apoyoSolicitado NO interviene.
+   */
   porcentaje: number;
 
   notas: string | null;

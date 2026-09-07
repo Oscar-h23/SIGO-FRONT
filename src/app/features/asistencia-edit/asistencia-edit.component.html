@@ -293,6 +293,31 @@
 
           </div>
 
+          <!-- APOYO SOLICITADO -->
+          <div class="field">
+
+            <label for="apoyoSolicitado">
+              Apoyo solicitado
+            </label>
+
+            <input
+              id="apoyoSolicitado"
+              name="apoyoSolicitado"
+              type="number"
+              min="0"
+              step="1"
+              [(ngModel)]="apoyoSolicitado"
+              [disabled]="saving()"
+              required
+            />
+
+            <small class="field-help">
+              Personal adicional coordinado para apoyar el turno.
+              No modifica el porcentaje de asistencia.
+            </small>
+
+          </div>
+
           <!-- PORCENTAJE -->
           <div class="summary-box">
 
@@ -324,6 +349,32 @@
           </div>
 
         </div>
+
+        @if (apoyoSolicitado > 0) {
+
+          <div class="field support-detail">
+
+            <label for="detalleApoyo">
+              Detalle del apoyo
+            </label>
+
+            <textarea
+              id="detalleApoyo"
+              name="detalleApoyo"
+              rows="3"
+              maxlength="500"
+              [(ngModel)]="detalleApoyo"
+              [disabled]="saving()"
+              placeholder="Ej.: Se solicitó apoyo de un agente de otra plaza."
+            ></textarea>
+
+            <small class="field-help">
+              Describe brevemente el apoyo coordinado.
+            </small>
+
+          </div>
+
+        }
 
       </section>
 
