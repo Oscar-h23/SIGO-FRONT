@@ -655,3 +655,20 @@
     height: 180px;
   }
 }
+.personal-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.apoyo-detail-field {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  .personal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .apoyo-detail-field {
+    grid-column: auto;
+  }
+}
