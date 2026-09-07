@@ -4,8 +4,8 @@
 
     <div>
 
-      <span class="eyebrow">
-        RESUMEN OPERATIVO
+      <span class="context-chip">
+        Panel de asistencia
       </span>
 
       <h1>
@@ -203,18 +203,53 @@
 
       </article>
 
-      <article class="card stat-card">
+      <article class="card stat-card stat-card-trend">
 
         <span>
           Asistencia promedio
         </span>
 
-        <strong>
-          {{ asistenciaPromedio() | number:'1.0-1' }}%
-        </strong>
+        <div class="stat-trend-row">
+
+          <strong>
+            {{ asistenciaPromedio() | number:'1.0-1' }}%
+          </strong>
+
+          @if (tendenciaMensual(); as tendencia) {
+
+            <span
+              class="trend-badge"
+              [class.trend-up]="tendencia.subiendo"
+              [class.trend-down]="!tendencia.subiendo">
+
+              {{ tendencia.subiendo ? '▲' : '▼' }}
+              {{ (tendencia.delta > 0 ? '+' : '') + (tendencia.delta | number:'1.0-1') }}%
+
+            </span>
+
+          }
+
+          @if (sparklineMensual().length >= 2) {
+
+            <svg
+              class="sparkline"
+              viewBox="0 0 120 32"
+              preserveAspectRatio="none"
+              aria-hidden="true">
+
+              <path
+                [attr.d]="sparklinePath(sparklineMensual())"
+                class="sparkline-path"
+              />
+
+            </svg>
+
+          }
+
+        </div>
 
         <small>
-          Promedio ponderado
+          Promedio ponderado · vs. mes anterior
         </small>
 
       </article>
@@ -282,6 +317,13 @@
             role="img"
             aria-label="Asistencia mensual">
 
+            <defs>
+              <linearGradient id="mensualGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#173f6e" stop-opacity="0.28" />
+                <stop offset="100%" stop-color="#173f6e" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+
             @for (tick of yTicks; track tick) {
 
               <line
@@ -301,6 +343,34 @@
                 {{ tick }}%
 
               </text>
+
+            }
+
+            <line
+              x1="55"
+              [attr.y1]="chartY(meta)"
+              x2="980"
+              [attr.y2]="chartY(meta)"
+              class="meta-line"
+            />
+
+            <text
+              x="980"
+              [attr.y]="chartY(meta) - 6"
+              text-anchor="end"
+              class="meta-label">
+
+              Meta {{ meta }}%
+
+            </text>
+
+            @if (areaPath(mensual())) {
+
+              <path
+                [attr.d]="areaPath(mensual())"
+                fill="url(#mensualGradient)"
+                stroke="none"
+              />
 
             }
 
@@ -325,7 +395,8 @@
                   [attr.cx]="chartX(i, mensual().length)"
                   [attr.cy]="chartY(point.value)"
                   r="5.5"
-                  class="line-dot">
+                  class="line-dot"
+                  [class.line-dot-alerta]="bajoMeta(point.value)">
 
                   <title>
                     {{ point.label }}:
@@ -400,6 +471,13 @@
             role="img"
             aria-label="Asistencia diaria">
 
+            <defs>
+              <linearGradient id="diarioGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#1d63d9" stop-opacity="0.24" />
+                <stop offset="100%" stop-color="#1d63d9" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+
             @for (tick of yTicks; track tick) {
 
               <line
@@ -422,11 +500,29 @@
 
             }
 
+            <line
+              x1="55"
+              [attr.y1]="chartY(meta)"
+              x2="980"
+              [attr.y2]="chartY(meta)"
+              class="meta-line"
+            />
+
+            @if (areaPath(diario())) {
+
+              <path
+                [attr.d]="areaPath(diario())"
+                fill="url(#diarioGradient)"
+                stroke="none"
+              />
+
+            }
+
             @if (linePath(diario())) {
 
               <path
                 [attr.d]="linePath(diario())"
-                class="line-path"
+                class="line-path line-path-diario"
               />
 
             }
@@ -443,7 +539,8 @@
                   [attr.cx]="chartX(i, diario().length)"
                   [attr.cy]="chartY(point.value)"
                   r="4.8"
-                  class="line-dot">
+                  class="line-dot line-dot-diario"
+                  [class.line-dot-alerta]="bajoMeta(point.value)">
 
                   <title>
                     Día {{ point.label }}:
@@ -517,7 +614,8 @@
 
               <div class="progress-head">
 
-                <span>
+                <span class="progress-label">
+                  <i class="progress-dot" [style.background]="turno.color"></i>
                   {{ turno.nombre }}
                 </span>
 
@@ -530,7 +628,8 @@
               <div class="progress-track">
 
                 <div
-                  [style.width.%]="turno.porcentaje">
+                  [style.width.%]="turno.porcentaje"
+                  [style.background]="turno.color">
                 </div>
 
               </div>
@@ -574,7 +673,8 @@
 
                 <div class="progress-head">
 
-                  <span>
+                  <span class="progress-label">
+                    <i class="progress-dot" [style.background]="motivo.color"></i>
                     {{ motivo.motivo }}
                   </span>
 
@@ -587,7 +687,8 @@
                 <div class="progress-track">
 
                   <div
-                    [style.width.%]="motivoWidth(motivo.total)">
+                    [style.width.%]="motivoWidth(motivo.total)"
+                    [style.background]="motivo.color">
                   </div>
 
                 </div>

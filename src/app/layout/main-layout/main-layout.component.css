@@ -793,3 +793,105 @@ footer {
       16px;
   }
 }
+.nav a {
+  min-height: 46px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 0 14px;
+
+  border-radius: 9px;
+
+  text-decoration: none;
+}
+
+
+.nav-icon {
+  width: 22px;
+  height: 22px;
+
+  min-width: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: currentColor;
+}
+
+.nav-icon svg {
+  width: 20px;
+  height: 20px;
+
+  display: block;
+}
+
+
+/* Sidebar retraído */
+
+.sidebar.collapsed .nav-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.sidebar.collapsed .nav-icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.sidebar.collapsed .nav a {
+  justify-content: center;
+}
+
+.sidebar.collapsed .nav-label {
+  display: none;
+}
+
+
+.nav-label {
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  transition:
+    opacity .2s ease,
+    width .2s ease;
+}
+
+
+/* =========================================================
+   SIDEBAR RETRAÍDO
+========================================================= */
+
+.sidebar.collapsed .brand-copy,
+.sidebar.collapsed .nav-label {
+  display: none;
+}
+
+
+.sidebar.collapsed .nav a {
+  justify-content: center;
+
+  padding-left: 0;
+  padding-right: 0;
+}
+
+
+.sidebar.collapsed .nav-icon {
+  width: 100%;
+
+  font-size: 1.25rem;
+}
+
+
+.sidebar.collapsed .brand {
+  justify-content: center;
+}
+
+
+.sidebar.collapsed .brand-mark {
+  margin: 0;
+}

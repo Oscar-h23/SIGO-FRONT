@@ -1,92 +1,220 @@
-<div class="shell" [class.sidebar-collapsed]="sidebarCollapsed()">
+<div
+  class="shell"
+  [class.sidebar-collapsed]="sidebarCollapsed()"
+>
 
   <!-- ===== SIDEBAR ===== -->
   <aside
     class="sidebar"
     [class.open]="sidebarOpen()"
-    [class.collapsed]="sidebarCollapsed()">
+    [class.collapsed]="sidebarCollapsed()"
+  >
 
     <div class="brand">
-      <div class="brand-mark">S</div>
-      <div class="brand-copy">
-        <strong>SIGO</strong>
-        <span>Gestión Operativa</span>
+
+      <div class="brand-mark">
+        S
       </div>
+
+      <div class="brand-copy">
+
+        <strong>
+          SIGO
+        </strong>
+
+        <span>
+          Gestión Operativa
+        </span>
+
+      </div>
+
     </div>
 
+
     <nav class="nav">
-      <a routerLink="/dashboard" routerLinkActive="active" title="Dashboard" (click)="closeSidebar()">
-        
-        <span class="nav-label">Dashboard</span>
-      </a>
 
-      <a routerLink="/registrar-asistencia" routerLinkActive="active" title="Registrar asistencia" (click)="closeSidebar()">
-        
-        <span class="nav-label">Registrar asistencia</span>
-      </a>
+  <!-- DASHBOARD -->
+  <a
+    routerLink="/dashboard"
+    routerLinkActive="active"
+    title="Dashboard"
+    (click)="closeSidebar()"
+  >
 
-      <a routerLink="/historial" routerLinkActive="active" title="Historial" (click)="closeSidebar()">
-        
-        <span class="nav-label">Historial de asistencias</span>
-      </a>
+    <span class="nav-icon">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+        <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+        <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+        <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+      </svg>
+    </span>
 
-      <a routerLink="/nuevo-relevo" routerLinkActive="active" title="Nuevo relevo" (click)="closeSidebar()">
-        
-        <span class="nav-label">Nuevo relevo</span>
-      </a>
+    <span class="nav-label">
+      Dashboard
+    </span>
 
-      <a routerLink="/historial-relevos" routerLinkActive="active" title="Historial de relevos" (click)="closeSidebar()">
-        
-        <span class="nav-label">Historial de relevos</span>
-      </a>
-    </nav>
+  </a>
 
-    
+
+  <!-- REGISTRAR ASISTENCIA -->
+  <a
+    routerLink="/registrar-asistencia"
+    routerLinkActive="active"
+    title="Registrar asistencia"
+    (click)="closeSidebar()"
+  >
+
+    <span class="nav-icon">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="5" y="4" width="14" height="17" rx="2"></rect>
+        <path d="M9 4.5V3.5A1.5 1.5 0 0 1 10.5 2h3A1.5 1.5 0 0 1 15 3.5v1"></path>
+        <path d="m8.5 13 2.2 2.2 4.8-5"></path>
+      </svg>
+    </span>
+
+    <span class="nav-label">
+      Registrar asistencia
+    </span>
+
+  </a>
+
+
+  <!-- HISTORIAL -->
+  <a
+    routerLink="/historial"
+    routerLinkActive="active"
+    title="Historial de asistencias"
+    (click)="closeSidebar()"
+  >
+
+    <span class="nav-icon">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+        <path d="M3 4v5h5"></path>
+        <path d="M12 7v5l3 2"></path>
+      </svg>
+    </span>
+
+    <span class="nav-label">
+      Historial de asistencias
+    </span>
+
+  </a>
+
+</nav>
+
   </aside>
 
-  <!-- ===== OVERLAY (móvil) ===== -->
+
+  <!-- ===== OVERLAY MÓVIL ===== -->
   @if (sidebarOpen()) {
+
     <button
       class="overlay"
       type="button"
       aria-label="Cerrar menú"
-      (click)="closeSidebar()">
+      (click)="closeSidebar()"
+    >
     </button>
+
   }
+
 
   <!-- ===== CONTENIDO ===== -->
   <section class="content">
 
     <header class="topbar">
+
       <button
         class="menu-btn"
         type="button"
-        [attr.aria-label]="sidebarCollapsed() ? 'Mostrar menú lateral' : 'Ocultar menú lateral'"
-        [attr.aria-expanded]="!sidebarCollapsed()"
-        (click)="toggleSidebar()">
+        [attr.aria-label]="
+          sidebarCollapsed()
+            ? 'Mostrar menú lateral'
+            : 'Ocultar menú lateral'
+        "
+        [attr.aria-expanded]="
+          !sidebarCollapsed()
+        "
+        (click)="toggleSidebar()"
+      >
         ☰
       </button>
 
+
       <div class="topbar-title">
-        <span>Módulo de asistencia</span>
-        <small>Control operativo en tiempo real</small>
+
+        <span>
+          Módulo de asistencia
+        </span>
+
+        <small>
+          Control operativo en tiempo real
+        </small>
+
       </div>
+
 
       <div class="user-chip">
-        <div class="avatar">CO</div>
-        <div>
-          <strong>Controlador</strong>
-          <span>Lima Expresa</span>
+
+        <div class="avatar">
+          CO
         </div>
+
+        <div>
+
+          <strong>
+            Controlador
+          </strong>
+
+          <span>
+            Lima Expresa
+          </span>
+
+        </div>
+
       </div>
+
     </header>
 
+
     <main class="main-content">
+
       <router-outlet />
+
     </main>
 
+
     <footer>
-      © {{ currentYear }} SIGO · Sistema Integral de Gestión Operativa
+
+      © {{ currentYear }}
+      SIGO · Sistema Integral de Gestión Operativa
+
     </footer>
 
   </section>
