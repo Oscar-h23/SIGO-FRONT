@@ -1,0 +1,164 @@
+<button
+  type="button"
+  class="chatbot-fab"
+  [class.chatbot-fab-open]="abierto()"
+  (click)="alternarChat()"
+  aria-label="Abrir asistente SIGO"
+>
+  @if (abierto()) {
+    <span>×</span>
+  } @else {
+    <span>IA</span>
+  }
+</button>
+
+@if (abierto()) {
+  <section
+    class="chatbot-panel"
+    aria-label="Asistente SIGO"
+  >
+    <header class="chatbot-header">
+      <div>
+        <strong>Asistente SIGO</strong>
+        <span>Consultas de asistencia</span>
+      </div>
+
+      <div class="chatbot-header-actions">
+        <button
+          type="button"
+          class="header-button"
+          (click)="limpiarConversacion()"
+        >
+          Limpiar
+        </button>
+
+        <button
+          type="button"
+          class="header-button close-button"
+          (click)="cerrarChat()"
+          aria-label="Cerrar chat"
+        >
+          ×
+        </button>
+      </div>
+    </header>
+
+    <div
+      #messagesContainer
+      class="chatbot-messages"
+    >
+      @for (
+        mensaje of mensajes();
+        track mensaje.id
+      ) {
+        <div
+          class="message-row"
+          [class.message-row-user]="
+            mensaje.role === 'usuario'
+          "
+        >
+          <div
+            class="message-bubble"
+            [class.message-user]="
+              mensaje.role === 'usuario'
+            "
+            [class.message-assistant]="
+              mensaje.role === 'asistente'
+            "
+          >
+            <span class="message-author">
+              {{
+                mensaje.role === 'usuario'
+                  ? 'Tú'
+                  : 'SIGO'
+              }}
+            </span>
+
+            <div
+              class="message-text"
+              [textContent]="mensaje.text"
+            ></div>
+          </div>
+        </div>
+      }
+
+      @if (cargando()) {
+        <div class="message-row">
+          <div
+            class="message-bubble message-assistant loading-message"
+          >
+            <span class="message-author">
+              SIGO
+            </span>
+
+            <div class="loading-content">
+              <span>Consultando</span>
+
+              <span class="loading-dots">
+                <i></i>
+                <i></i>
+                <i></i>
+              </span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (
+      mensajes().length <= 1 &&
+      !cargando()
+    ) {
+      <div class="chatbot-suggestions">
+        <span class="suggestions-title">
+          Consultas sugeridas
+        </span>
+
+        <div class="suggestion-list">
+          @for (
+            sugerencia of sugerencias;
+            track sugerencia
+          ) {
+            <button
+              type="button"
+              class="suggestion-button"
+              (click)="usarSugerencia(sugerencia)"
+            >
+              {{ sugerencia }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <footer class="chatbot-footer">
+      <div class="chatbot-input-wrap">
+        <textarea
+          [(ngModel)]="mensajeActual"
+          (keydown)="manejarTecla($event)"
+          [disabled]="cargando()"
+          maxlength="500"
+          rows="1"
+          placeholder="Escribe una consulta..."
+          aria-label="Mensaje para el asistente"
+        ></textarea>
+
+        <button
+          type="button"
+          class="send-button"
+          [disabled]="
+            cargando() ||
+            !mensajeActual.trim()
+          "
+          (click)="enviarMensaje()"
+        >
+          Enviar
+        </button>
+      </div>
+
+      <small>
+        Enter para enviar · Shift + Enter para nueva línea
+      </small>
+    </footer>
+  </section>
+}
