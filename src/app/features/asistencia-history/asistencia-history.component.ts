@@ -70,9 +70,17 @@ export class AsistenciaHistoryComponent implements OnInit {
   readonly expandedId =
     signal<number | null>(null);
 
+  readonly detalleSeleccionado =
+    signal<AsistenciaResponse | null>(null);
+
   inicio = '';
   fin = '';
   plazaId: number | null = null;
+
+  turnoFiltro = '';
+
+  readonly tamanioPagina = 12;
+  paginaActual = 1;
 
   ngOnInit(): void {
 
@@ -160,6 +168,7 @@ export class AsistenciaHistoryComponent implements OnInit {
 
           this.registros.set(items);
 
+          this.paginaActual = 1;
           this.expandedId.set(null);
 
           this.loading.set(false);
@@ -177,34 +186,152 @@ export class AsistenciaHistoryComponent implements OnInit {
       });
   }
 
-  limpiar(): void {
-
-    const hoy =
-      this.obtenerFechaHoy();
-
-    this.inicio = hoy;
-    this.fin = hoy;
-    this.plazaId = null;
-
-    this.cargar();
-  }
-
   cambiarPlaza(): void {
 
+    this.paginaActual = 1;
     this.cargar();
   }
 
-  toggle(
-    id: number
-  ): void {
+  cambiarTurno(): void {
 
-    this.expandedId.update(
-      current =>
-        current === id
-          ? null
-          : id
+    this.paginaActual = 1;
+  }
+
+  registrosFiltrados(): AsistenciaResponse[] {
+
+    const turno =
+      this.turnoFiltro
+        .trim()
+        .toUpperCase();
+
+    if (!turno) {
+      return this.registros();
+    }
+
+    return this.registros().filter(
+      registro =>
+        String(registro.turno ?? '')
+          .trim()
+          .toUpperCase() === turno
     );
   }
+
+  registrosPaginados(): AsistenciaResponse[] {
+
+    const registros =
+      this.registrosFiltrados();
+
+    const inicio =
+      (this.paginaActual - 1) *
+      this.tamanioPagina;
+
+    return registros.slice(
+      inicio,
+      inicio + this.tamanioPagina
+    );
+  }
+
+  totalPaginas(): number {
+
+    return Math.max(
+      1,
+      Math.ceil(
+        this.registrosFiltrados().length /
+        this.tamanioPagina
+      )
+    );
+  }
+
+  paginasVisibles(): number[] {
+
+    const total =
+      this.totalPaginas();
+
+    if (total <= 5) {
+      return Array.from(
+        { length: total },
+        (_, index) => index + 1
+      );
+    }
+
+    const inicio =
+      Math.max(
+        1,
+        Math.min(
+          this.paginaActual - 2,
+          total - 4
+        )
+      );
+
+    return Array.from(
+      { length: 5 },
+      (_, index) => inicio + index
+    );
+  }
+
+  cambiarPagina(pagina: number): void {
+
+    const total =
+      this.totalPaginas();
+
+    if (
+      pagina < 1 ||
+      pagina > total ||
+      pagina === this.paginaActual
+    ) {
+      return;
+    }
+
+    this.paginaActual = pagina;
+    this.expandedId.set(null);
+  }
+
+  primerRegistroPagina(): number {
+
+    const total =
+      this.registrosFiltrados().length;
+
+    if (total === 0) {
+      return 0;
+    }
+
+    return (
+      (this.paginaActual - 1) *
+      this.tamanioPagina
+    ) + 1;
+  }
+
+  ultimoRegistroPagina(): number {
+
+    return Math.min(
+      this.paginaActual *
+      this.tamanioPagina,
+      this.registrosFiltrados().length
+    );
+  }
+
+  abrirDetalle(
+    registro: AsistenciaResponse
+  ): void {
+
+    this.detalleSeleccionado.set(
+      registro
+    );
+
+    document.body.style.overflow =
+      'hidden';
+  }
+
+  cerrarDetalle(): void {
+
+    this.detalleSeleccionado.set(
+      null
+    );
+
+    document.body.style.overflow =
+      '';
+  }
+
 
   badgeClass(
     value: number
@@ -890,8 +1017,8 @@ await this.dibujarEvidencia(
           this.logoUrl
         );
 
-      const maxWidth = 36;
-      const maxHeight = 34;
+      const maxWidth = 33;
+      const maxHeight = 31;
 
       const escala =
         Math.min(
@@ -980,9 +1107,9 @@ await this.dibujarEvidencia(
        * sin el gran espacio transparente superior/inferior.
        */
 
-      const x = 4;
-      const y = 171;
-      const ancho = 289;
+      const x = 7;
+      const y = 176;
+      const ancho = 282;
 
       /*
        * Conservamos la proporción original del PNG.
@@ -1626,7 +1753,7 @@ await this.dibujarEvidencia(
 
     const text:
       [number, number, number] =
-      [25, 35, 45];
+      [220, 0, 75];
 
     const border:
       [number, number, number] =
