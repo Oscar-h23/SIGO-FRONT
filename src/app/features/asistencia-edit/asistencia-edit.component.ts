@@ -17,6 +17,16 @@ import {
 
 import { AsistenciaApiService } from '../../core/services/asistencia-api.service';
 
+type EvidenciaTipo =
+  | 'CALENTAMIENTO'
+  | 'INICIO_TURNO'
+  | 'TAPONES_AUDITIVOS';
+
+interface ArchivoEvidenciaNuevo {
+  archivo: File;
+  tipo: EvidenciaTipo;
+}
+
 @Component({
   selector: 'app-asistencia-edit',
   standalone: true,
@@ -107,7 +117,7 @@ export class AsistenciaEditComponent implements OnInit {
 
   ausencias: AusenciaRequest[] = [];
 
-  archivosNuevos: File[] = [];
+  archivosNuevos: ArchivoEvidenciaNuevo[] = [];
 
   ngOnInit(): void {
 
@@ -504,53 +514,94 @@ export class AsistenciaEditComponent implements OnInit {
    * =========================================================
    */
   seleccionarArchivos(
+    tipo: EvidenciaTipo,
     event: Event
   ): void {
 
     const input =
       event.target as HTMLInputElement;
 
-    if (!input.files) {
+    const archivo =
+      input.files?.[0];
+
+    if (!archivo) {
       return;
     }
 
-    const archivos =
-      Array.from(
-        input.files
-      );
+    const tiposPermitidos = [
+      'image/jpeg',
+      'image/png',
+      'image/webp'
+    ];
 
-    const imagenes =
-      archivos.filter(
-        archivo =>
-          archivo.type
-            .startsWith('image/')
+    if (!tiposPermitidos.includes(archivo.type)) {
+      this.error.set(
+        'Solo se permiten imágenes JPG, PNG o WEBP.'
       );
+      input.value = '';
+      return;
+    }
 
+    const maxSize = 10 * 1024 * 1024;
+
+    if (archivo.size > maxSize) {
+      this.error.set(
+        'Cada fotografía debe pesar como máximo 10 MB.'
+      );
+      input.value = '';
+      return;
+    }
+
+    this.error.set('');
+
+    /*
+     * Solo puede quedar una fotografía nueva pendiente
+     * por cada tipo de evidencia. Si el usuario vuelve a
+     * elegir una imagen, reemplazamos la selección anterior.
+     */
     this.archivosNuevos = [
-      ...this.archivosNuevos,
-      ...imagenes
+      ...this.archivosNuevos.filter(
+        item => item.tipo !== tipo
+      ),
+      { archivo, tipo }
     ];
 
     input.value = '';
   }
 
-  /*
-   * =========================================================
-   * QUITAR FOTO NUEVA ANTES DE SUBIR
-   * =========================================================
-   */
-  quitarArchivoNuevo(
-    index: number
+  archivoNuevoPorTipo(
+    tipo: EvidenciaTipo
+  ): ArchivoEvidenciaNuevo | undefined {
+
+    return this.archivosNuevos.find(
+      item => item.tipo === tipo
+    );
+  }
+
+  quitarArchivoNuevoPorTipo(
+    tipo: EvidenciaTipo
   ): void {
 
-    this.archivosNuevos.splice(
-      index,
-      1
-    );
+    this.archivosNuevos =
+      this.archivosNuevos.filter(
+        item => item.tipo !== tipo
+      );
+  }
 
-    this.archivosNuevos = [
-      ...this.archivosNuevos
-    ];
+  nombreTipoEvidencia(
+    tipo: string
+  ): string {
+
+    switch (tipo) {
+      case 'CALENTAMIENTO':
+        return 'Calentamiento';
+      case 'INICIO_TURNO':
+        return 'Inicio de turno';
+      case 'TAPONES_AUDITIVOS':
+        return 'Tapones auditivos';
+      default:
+        return tipo || 'Evidencia';
+    }
   }
 
   /*
@@ -912,10 +963,11 @@ export class AsistenciaEditComponent implements OnInit {
 
     const peticiones =
       this.archivosNuevos.map(
-        archivo =>
+        item =>
           this.api.subirEvidencia(
             this.asistenciaId!,
-            archivo
+            item.archivo,
+            item.tipo
           )
       );
 
