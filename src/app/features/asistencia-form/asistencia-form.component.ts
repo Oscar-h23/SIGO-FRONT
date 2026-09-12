@@ -31,6 +31,10 @@ import {
   Turno
 } from '../../core/models/asistencia.models';
 
+import {
+  ImageCropperModalComponent
+} from '../shared/image-cropper-modal.component';
+
 
 /* =========================================================
  * TIPOS
@@ -55,7 +59,8 @@ type EvidenciaTipo =
 
   imports: [
     CommonModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    ImageCropperModalComponent
   ],
 
   templateUrl:
@@ -130,6 +135,22 @@ implements OnInit {
 
   readonly evidenciaTapones =
     signal<File | null>(null);
+
+
+  /*
+   * Editor de imágenes.
+   *
+   * La fotografía se recorta antes de guardarse como evidencia
+   * para mantener la misma proporción utilizada en el PDF.
+   */
+  readonly cropperVisible =
+    signal(false);
+
+  readonly cropperFile =
+    signal<File | null>(null);
+
+  readonly cropperTipo =
+    signal<EvidenciaTipo | null>(null);
 
 
   /* =======================================================
@@ -535,7 +556,7 @@ implements OnInit {
       return;
     }
 
-    this.setEvidenceFile(
+    this.abrirEditorImagen(
       tipo,
       file
     );
@@ -615,9 +636,114 @@ implements OnInit {
         }
       );
 
+    this.abrirEditorImagen(
+      tipo,
+      file
+    );
+  }
+
+
+  /*
+   * =======================================================
+   * EDITOR / RECORTE DE EVIDENCIAS
+   * =======================================================
+   */
+
+  private abrirEditorImagen(
+    tipo: EvidenciaTipo,
+    file: File
+  ): void {
+
+    const tiposPermitidos = [
+      'image/jpeg',
+      'image/png',
+      'image/webp'
+    ];
+
+    if (
+      !tiposPermitidos.includes(
+        file.type
+      )
+    ) {
+
+      this.error.set(
+        'Solo se permiten imágenes JPG, PNG o WEBP.'
+      );
+
+      return;
+    }
+
+    const maxSize =
+      10 *
+      1024 *
+      1024;
+
+    if (
+      file.size >
+      maxSize
+    ) {
+
+      this.error.set(
+        'Cada fotografía debe pesar como máximo 10 MB.'
+      );
+
+      return;
+    }
+
+    this.error.set('');
+
+    this.cropperTipo.set(
+      tipo
+    );
+
+    this.cropperFile.set(
+      file
+    );
+
+    this.cropperVisible.set(
+      true
+    );
+  }
+
+
+  onCropperConfirm(
+    file: File
+  ): void {
+
+    const tipo =
+      this.cropperTipo();
+
+    if (!tipo) {
+      return;
+    }
+
     this.setEvidenceFile(
       tipo,
       file
+    );
+
+    this.cerrarCropper();
+  }
+
+
+  onCropperCancel(): void {
+
+    this.cerrarCropper();
+  }
+
+
+  private cerrarCropper(): void {
+
+    this.cropperVisible.set(
+      false
+    );
+
+    this.cropperFile.set(
+      null
+    );
+
+    this.cropperTipo.set(
+      null
     );
   }
 

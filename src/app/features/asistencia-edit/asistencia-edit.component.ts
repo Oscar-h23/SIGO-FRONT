@@ -17,6 +17,7 @@ import {
 
 import { AsistenciaApiService } from '../../core/services/asistencia-api.service';
 
+import { ImageCropperModalComponent } from '../shared/image-cropper-modal.component';
 type EvidenciaTipo =
   | 'CALENTAMIENTO'
   | 'INICIO_TURNO'
@@ -33,7 +34,8 @@ interface ArchivoEvidenciaNuevo {
   imports: [
     CommonModule,
     FormsModule,
-    RouterModule
+    RouterModule,
+    ImageCropperModalComponent
   ],
   templateUrl: './asistencia-edit.component.html',
   styleUrl: './asistencia-edit.component.css'
@@ -118,6 +120,15 @@ export class AsistenciaEditComponent implements OnInit {
   ausencias: AusenciaRequest[] = [];
 
   archivosNuevos: ArchivoEvidenciaNuevo[] = [];
+
+  readonly cropperVisible =
+    signal(false);
+
+  readonly cropperFile =
+    signal<File | null>(null);
+
+  readonly cropperTipo =
+    signal<EvidenciaTipo | null>(null);
 
   ngOnInit(): void {
 
@@ -528,45 +539,115 @@ export class AsistenciaEditComponent implements OnInit {
       return;
     }
 
+    input.value = '';
+
+    this.abrirEditorImagen(
+      tipo,
+      archivo
+    );
+  }
+
+  private abrirEditorImagen(
+    tipo: EvidenciaTipo,
+    archivo: File
+  ): void {
+
     const tiposPermitidos = [
       'image/jpeg',
       'image/png',
       'image/webp'
     ];
 
-    if (!tiposPermitidos.includes(archivo.type)) {
+    if (
+      !tiposPermitidos.includes(
+        archivo.type
+      )
+    ) {
+
       this.error.set(
         'Solo se permiten imágenes JPG, PNG o WEBP.'
       );
-      input.value = '';
+
       return;
     }
 
-    const maxSize = 10 * 1024 * 1024;
+    const maxSize =
+      10 * 1024 * 1024;
 
-    if (archivo.size > maxSize) {
+    if (
+      archivo.size >
+      maxSize
+    ) {
+
       this.error.set(
         'Cada fotografía debe pesar como máximo 10 MB.'
       );
-      input.value = '';
+
       return;
     }
 
     this.error.set('');
 
+    this.cropperTipo.set(
+      tipo
+    );
+
+    this.cropperFile.set(
+      archivo
+    );
+
+    this.cropperVisible.set(
+      true
+    );
+  }
+
+  onCropperConfirm(
+    archivo: File
+  ): void {
+
+    const tipo =
+      this.cropperTipo();
+
+    if (!tipo) {
+      return;
+    }
+
     /*
      * Solo puede quedar una fotografía nueva pendiente
-     * por cada tipo de evidencia. Si el usuario vuelve a
-     * elegir una imagen, reemplazamos la selección anterior.
+     * por cada tipo de evidencia.
      */
     this.archivosNuevos = [
       ...this.archivosNuevos.filter(
-        item => item.tipo !== tipo
+        item =>
+          item.tipo !== tipo
       ),
-      { archivo, tipo }
+      {
+        archivo,
+        tipo
+      }
     ];
 
-    input.value = '';
+    this.cerrarCropper();
+  }
+
+  onCropperCancel(): void {
+
+    this.cerrarCropper();
+  }
+
+  private cerrarCropper(): void {
+
+    this.cropperVisible.set(
+      false
+    );
+
+    this.cropperFile.set(
+      null
+    );
+
+    this.cropperTipo.set(
+      null
+    );
   }
 
   archivoNuevoPorTipo(

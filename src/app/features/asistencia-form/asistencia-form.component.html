@@ -1326,4 +1326,19 @@
 
   }
 
+
+
+  <!-- ============================================ -->
+  <!-- EDITOR DE EVIDENCIA -->
+  <!-- ============================================ -->
+
+  <app-image-cropper-modal
+    [visible]="cropperVisible()"
+    [imageFile]="cropperFile()"
+    titulo="Ajustar fotografía para el reporte"
+    (cancelar)="onCropperCancel()"
+    (confirmar)="onCropperConfirm($event)"
+  >
+  </app-image-cropper-modal>
+
 </div>

@@ -1,0 +1,320 @@
+@if (visible && imageFile) {
+
+  <div
+    class="cropper-overlay"
+    (click)="cancelarEdicion()"
+  >
+
+    <div
+      class="cropper-modal"
+      (click)="$event.stopPropagation()"
+    >
+
+      <!-- =========================================
+           CABECERA
+           ========================================= -->
+
+      <div class="cropper-header">
+
+        <div>
+
+          <h2>
+            {{ titulo }}
+          </h2>
+
+          <p>
+            Ajusta la fotografía dentro del área marcada.
+            Esa será la imagen que aparecerá en el PDF.
+          </p>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="close-button"
+          aria-label="Cerrar"
+          (click)="cancelarEdicion()"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <!-- =========================================
+           CONTENIDO
+           ========================================= -->
+
+      <div class="cropper-content">
+
+
+        <!-- =======================================
+             EDITOR
+             ======================================= -->
+
+        <div class="editor-section">
+
+          <div class="editor-label">
+
+            Vista de recorte
+
+            <span>
+              Proporción PDF 92:70
+            </span>
+
+          </div>
+
+
+          <div class="cropper-wrapper">
+
+            <image-cropper
+
+              [imageFile]="imageFile"
+
+              [maintainAspectRatio]="true"
+
+              [aspectRatio]="aspectRatio"
+
+              [resizeToWidth]="outputWidth"
+
+              [resizeToHeight]="outputHeight"
+
+              [onlyScaleDown]="false"
+
+              [transform]="transform"
+
+              [autoCrop]="true"
+
+              format="jpeg"
+
+              output="blob"
+
+              (imageCropped)="imageCropped($event)"
+
+              (imageLoaded)="imageLoaded()"
+
+              (loadImageFailed)="loadImageFailed()"
+
+            >
+            </image-cropper>
+
+
+            @if (loading) {
+
+              <div class="loading">
+
+                Cargando fotografía...
+
+              </div>
+
+            }
+
+          </div>
+
+
+          <!-- =====================================
+               CONTROLES
+               ===================================== -->
+
+          <div class="controls">
+
+
+            <!-- ROTACIÓN -->
+
+            <div class="control-group">
+
+              <span class="control-title">
+                Rotación
+              </span>
+
+
+              <div class="button-group">
+
+                <button
+                  type="button"
+                  class="secondary-button"
+                  (click)="rotateLeft()"
+                >
+                  Girar izquierda
+                </button>
+
+
+                <button
+                  type="button"
+                  class="secondary-button"
+                  (click)="rotateRight()"
+                >
+                  Girar derecha
+                </button>
+
+              </div>
+
+            </div>
+
+
+            <!-- ZOOM -->
+
+            <div class="control-group zoom-group">
+
+              <span class="control-title">
+                Zoom
+              </span>
+
+
+              <div class="zoom-controls">
+
+                <button
+                  type="button"
+                  class="zoom-button"
+                  (click)="zoomOut()"
+                  [disabled]="scale <= 1"
+                >
+                  −
+                </button>
+
+
+                <input
+                  type="range"
+
+                  min="1"
+
+                  max="3"
+
+                  step="0.05"
+
+                  [value]="scale"
+
+                  (input)="onZoomChange($event)"
+                >
+
+
+                <button
+                  type="button"
+                  class="zoom-button"
+                  (click)="zoomIn()"
+                  [disabled]="scale >= 3"
+                >
+                  +
+                </button>
+
+              </div>
+
+
+              <small>
+                {{ (scale * 100).toFixed(0) }}%
+              </small>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- =======================================
+             PREVISUALIZACIÓN
+             ======================================= -->
+
+        <div class="preview-section">
+
+          <div class="editor-label">
+
+            Vista previa del PDF
+
+            <span>
+              Resultado final
+            </span>
+
+          </div>
+
+
+          <div class="pdf-preview">
+
+            <div class="pdf-image-container">
+
+              @if (previewUrl) {
+
+                <img
+                  [src]="previewUrl"
+                  alt="Vista previa de la fotografía"
+                >
+
+              } @else {
+
+                <div class="preview-placeholder">
+
+                  La vista previa aparecerá aquí.
+
+                </div>
+
+              }
+
+            </div>
+
+
+            <div class="preview-description">
+
+              <strong>
+                Fotografía de evidencia
+              </strong>
+
+              <span>
+                92 × 70 mm
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- =========================================
+           ERROR
+           ========================================= -->
+
+      @if (error) {
+
+        <div class="cropper-error">
+
+          {{ error }}
+
+        </div>
+
+      }
+
+
+      <!-- =========================================
+           FOOTER
+           ========================================= -->
+
+      <div class="cropper-footer">
+
+        <button
+          type="button"
+          class="cancel-button"
+          (click)="cancelarEdicion()"
+        >
+          Cancelar
+        </button>
+
+
+        <button
+          type="button"
+          class="confirm-button"
+          [disabled]="!croppedBlob"
+          (click)="confirmarRecorte()"
+        >
+          Usar fotografía
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+}
